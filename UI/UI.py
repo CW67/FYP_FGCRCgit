@@ -1,12 +1,15 @@
 from PyQt5 import QtGui
-from PyQt5.QtWidgets import QWidget, QApplication, QLabel, QVBoxLayout, QPushButton
+from PyQt5.QtWidgets import  QLabel, QPushButton
 from PyQt5.QtGui import QPixmap
-from PyQt5.QtMultimedia import QCameraInfo
+from PyQt5.QtMultimedia import QCameraInfo, QCamera, QCameraImageCapture
 from PyQt5.QtWidgets import *
 import sys
+from InputDialog import InputDialog
 import cv2
 from PyQt5.QtCore import pyqtSignal, pyqtSlot, Qt, QThread
 import numpy as np
+from plyer import notification
+
 
 ### Video player made for the GUI, credit to Evgeny Fomin and Antonio Domènech (As seen on github https://gist.github.com/docPhil99/ca4da12c9d6f29b9cea137b617c7b8b1)
 class VideoThread(QThread):
@@ -15,17 +18,21 @@ class VideoThread(QThread):
     def __init__(self):
         super().__init__()
         self._run_flag = True
+        self._pnum = 0
+
+
 
     def run(self):
         # capture from web cam
         self._run_flag = True
-        self.cap = cv2.VideoCapture(0)
+        self.cap = cv2.VideoCapture(self._pnum)
         while self._run_flag:
             ret, cv_img = self.cap.read()
             if ret:
                 self.change_pixmap_signal.emit(cv_img)
         # shut down capture system
         self.cap.release()
+
 
     def stop(self):
         """Sets run flag to False and waits for thread to finish"""
@@ -36,33 +43,50 @@ class MyWindow(QMainWindow):
     def __init__(self):
         super(MyWindow, self).__init__()
         self.available_cameras = QCameraInfo.availableCameras()  # Getting available cameras
-
         cent = QDesktopWidget().availableGeometry().center()  # Finds the center of the screen
         self.setStyleSheet("background-color: white;")
         self.resize(1400, 800)
         self.frameGeometry().moveCenter(cent)
-        self.setWindowTitle('S L A I T')
+        self.setWindowTitle('F.Move')
         self.initWindow()
+        self.setWindowFlags(Qt.Window | Qt.CustomizeWindowHint | Qt.WindowStaysOnTopHint | Qt.WindowCloseButtonHint | Qt.WindowMinMaxButtonsHint)
+        self.show()
+
+
 
 ########################################################################################################################
-#                                                   Windows                                                            #
+#                                                   GUI Elements                                                            #
 ########################################################################################################################
     def initWindow(self):
         # create the video capture thread
         self.thread = VideoThread()
 
-        # Label with the name of the co-founders
-        self.label = QLabel(self)  # Create label
-        self.label.move(30, 550)  # Allocate label in window
-        self.label.resize(300, 20)  # Set size for the label
-        self.label.setAlignment(Qt.AlignCenter)  # Align text in the label
 
         # Button to start video
         self.ss_video = QPushButton(self)
         self.ss_video.setText('Start video')
-        self.ss_video.move(769, 100)
-        self.ss_video.resize(300, 100)
+        self.ss_video.move(350, 50)
+        self.ss_video.resize(150, 50)
         self.ss_video.clicked.connect(self.ClickStartVideo)
+
+        # creating a tool bar
+        toolbar = QToolBar("Camera Tool Bar")
+        self.addToolBar(toolbar)
+        camera_selector = QComboBox()
+        camera_selector.setStatusTip("Choose camera to take pictures")
+        # adding tool tip to it
+        camera_selector.setToolTip("Select Camera")
+        camera_selector.setToolTipDuration(2500)
+        # adding items to the combo box
+        camera_selector.addItems([camera.description()
+                                  for camera in self.available_cameras])
+        # adding this to tool bar
+        toolbar.addWidget(camera_selector)
+
+        button_action = QAction("Camera settings", self)
+        button_action.setStatusTip("This is your button")
+        button_action.triggered.connect(self.showdialog)
+        toolbar.addAction(button_action)
 
         # Status bar
         self.status = QStatusBar()
@@ -70,15 +94,18 @@ class MyWindow(QMainWindow):
         self.setStatusBar(self.status)  # Adding status bar to the main window
         self.status.showMessage('Ready to start')
 
+        #Video screen
         self.image_label = QLabel(self)
-        self.disply_width = 669
-        self.display_height = 501
+        self.disply_width = 300
+        self.display_height = 250
         self.image_label.resize(self.disply_width, self.display_height)
         self.image_label.setStyleSheet("background : black;")
-        self.image_label.move(0, 0)
+        self.image_label.move(10, 40)
+
+
 
 ########################################################################################################################
-#                                                   Buttons                                                            #
+#                                                   Start/stop Buttons                                                            #
 ########################################################################################################################
     # Activates when Start/Stop video button is clicked to Start (ss_video
     def ClickStartVideo(self):
@@ -123,9 +150,34 @@ class MyWindow(QMainWindow):
         #p = convert_to_Qt_format.scaled(801, 801, Qt.KeepAspectRatio)
         return QPixmap.fromImage(p)
 
+####################################################################################
+    def showdialog(self):
+        self.dialog = InputDialog( labels=["First", "Second"])
+        self.dialog.show()
+        if self.dialog.exec():
+            print(self.dialog.getInputs())
+
+    def showNoti(selfs):
+        # import win10toast
+        from win10toast import ToastNotifier
+        # create an object to ToastNotifier class
+        n = ToastNotifier()
+        n.show_toast("GEEKSFORGEEKS", "You got notification",  threaded=True)
+
+
+###################################################CAMERA SELECTION======================================================
+    # getter method
+    def get_camera(self):
+        return self._pnum
+
+    # setter method
+    def set_camera(self, x):
+        self._pnum = x
+##########################################################################################################################
+
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     win = MyWindow()
-    win.show()
+   #win.show()
     sys.exit(app.exec())

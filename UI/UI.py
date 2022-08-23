@@ -8,6 +8,8 @@ from InputDialog import InputDialog
 import cv2
 from PyQt5.QtCore import pyqtSignal, pyqtSlot, Qt, QThread
 import numpy as np
+from plyer import notification
+
 
 ### Video player made for the GUI, credit to Evgeny Fomin and Antonio Domènech (As seen on github https://gist.github.com/docPhil99/ca4da12c9d6f29b9cea137b617c7b8b1)
 class VideoThread(QThread):
@@ -17,6 +19,8 @@ class VideoThread(QThread):
         super().__init__()
         self._run_flag = True
         self._pnum = 0
+
+
 
     def run(self):
         # capture from web cam
@@ -28,6 +32,7 @@ class VideoThread(QThread):
                 self.change_pixmap_signal.emit(cv_img)
         # shut down capture system
         self.cap.release()
+
 
     def stop(self):
         """Sets run flag to False and waits for thread to finish"""
@@ -42,8 +47,12 @@ class MyWindow(QMainWindow):
         self.setStyleSheet("background-color: white;")
         self.resize(1400, 800)
         self.frameGeometry().moveCenter(cent)
-        self.setWindowTitle('S L A I T')
+        self.setWindowTitle('F.Move')
         self.initWindow()
+        self.setWindowFlags(Qt.Window | Qt.CustomizeWindowHint | Qt.WindowStaysOnTopHint | Qt.WindowCloseButtonHint | Qt.WindowMinMaxButtonsHint)
+        self.show()
+
+
 
 ########################################################################################################################
 #                                                   GUI Elements                                                            #
@@ -56,8 +65,8 @@ class MyWindow(QMainWindow):
         # Button to start video
         self.ss_video = QPushButton(self)
         self.ss_video.setText('Start video')
-        self.ss_video.move(769, 100)
-        self.ss_video.resize(300, 100)
+        self.ss_video.move(350, 50)
+        self.ss_video.resize(150, 50)
         self.ss_video.clicked.connect(self.ClickStartVideo)
 
         # creating a tool bar
@@ -85,9 +94,10 @@ class MyWindow(QMainWindow):
         self.setStatusBar(self.status)  # Adding status bar to the main window
         self.status.showMessage('Ready to start')
 
+        #Video screen
         self.image_label = QLabel(self)
-        self.disply_width = 669
-        self.display_height = 501
+        self.disply_width = 300
+        self.display_height = 250
         self.image_label.resize(self.disply_width, self.display_height)
         self.image_label.setStyleSheet("background : black;")
         self.image_label.move(10, 40)
@@ -144,6 +154,15 @@ class MyWindow(QMainWindow):
     def showdialog(self):
         self.dialog = InputDialog( labels=["First", "Second"])
         self.dialog.show()
+        if self.dialog.exec():
+            print(self.dialog.getInputs())
+
+    def showNoti(selfs):
+        # import win10toast
+        from win10toast import ToastNotifier
+        # create an object to ToastNotifier class
+        n = ToastNotifier()
+        n.show_toast("GEEKSFORGEEKS", "You got notification",  threaded=True)
 
 
 ###################################################CAMERA SELECTION======================================================
@@ -160,5 +179,5 @@ class MyWindow(QMainWindow):
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     win = MyWindow()
-    win.show()
+   #win.show()
     sys.exit(app.exec())

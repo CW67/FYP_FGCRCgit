@@ -20,8 +20,6 @@ class VideoThread(QThread):
         self._run_flag = True
         self._pnum = 0
 
-
-
     def run(self):
         # capture from web cam
         self._run_flag = True

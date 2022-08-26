@@ -59,7 +59,6 @@ class MyWindow(QMainWindow):
         # create the video capture thread
         self.thread = VideoThread()
 
-
         # Button to start video
         self.ss_video = QPushButton(self)
         self.ss_video.setText('Start video')

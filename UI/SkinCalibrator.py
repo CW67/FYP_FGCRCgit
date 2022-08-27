@@ -1,4 +1,3 @@
-
 from superqt import QRangeSlider
 from qtrangeslider import QRangeSlider
 from qtrangeslider.qtcompat import QtCore
@@ -6,11 +5,12 @@ from qtrangeslider.qtcompat import QtWidgets as QtW
 from qtrangeslider import QLabeledRangeSlider
 from UI import VideoThread
 from PyQt5 import QtGui
-from PyQt5.QtWidgets import  QLabel, QPushButton
+from PyQt5.QtWidgets import QLabel, QPushButton
 from PyQt5.QtGui import QPixmap
 import cv2
 from PyQt5.QtCore import pyqtSignal, pyqtSlot, Qt, QThread
-
+import numpy as np
+from numpy import expand_dims
 
 QSS = """
 QSlider {
@@ -45,51 +45,50 @@ class DemoWidget(QtW.QWidget):
     def __init__(self) -> None:
         super().__init__()
 
+        self.hLow = 0
+        self.hHigh = 255
+
+        self.sLow = 0
+        self.sHigh = 255
+
+        self.vLow = 0
+        self.vHigh = 255
+
         range_hslider = QLabeledRangeSlider(QtCore.Qt.Horizontal)
         range_hslider.setMaximumWidth(400)
-        range_hslider.setValue((0, 100))
+        range_hslider.setRange(0, 255)
+        range_hslider.setValue((0, 255))
 
         range_sslider = QLabeledRangeSlider(QtCore.Qt.Horizontal)
         range_sslider.setMaximumWidth(400)
-        range_sslider.setValue((0, 100))
+        range_sslider.setRange(0, 255)
+        range_sslider.setValue((0, 255))
 
         range_vslider = QLabeledRangeSlider(QtCore.Qt.Horizontal)
         range_vslider.setMaximumWidth(400)
-        range_vslider.setValue((0, 100))
+        range_vslider.setRange(0, 255)
+        range_vslider.setValue((0, 255))
 
-
-        szp = QtW.QSizePolicy.Maximum
         left = QtW.QWidget()
         left.setLayout(QtW.QVBoxLayout())
         left.setContentsMargins(2, 2, 2, 2)
         label1 = QtW.QLabel("Hue Value")
-        #label1.setSizePolicy(szp, szp)
+        # label1.setSizePolicy(szp, szp)
 
         label2 = QtW.QLabel("Saturation Value")
-        #label2.setSizePolicy(szp, szp)
+        # label2.setSizePolicy(szp, szp)
 
         label3 = QtW.QLabel("Brightness Value")
-        #label3.setSizePolicy(szp, szp)
+        # label3.setSizePolicy(szp, szp)
 
-
-        left.layout().addWidget(range_hslider)
-        left.layout().addWidget(label1)
-
-        left.layout().addWidget(range_sslider)
-        left.layout().addWidget(label2)
-
-        left.layout().addWidget(range_vslider)
-        left.layout().addWidget(label3)
-
-        range_vslider.valueChanged.connect(lambda e: print("doubslider valuechanged", e))
-
-
-        #Video screen
+        # Video screen
         self.vThread = VideoThread()
         self.image_label = QLabel()
-        self.display_width = 300
-        self.display_height = 250
+        self.display_width = 640
+        self.display_height = 480
         self.image_label.resize(self.display_width, self.display_height)
+        self.image_label.setFixedWidth(self.display_width)
+        self.image_label.setFixedHeight(self.display_height)
         self.image_label.setStyleSheet("background : black;")
         left.layout().addWidget(self.image_label)
 
@@ -101,16 +100,29 @@ class DemoWidget(QtW.QWidget):
         self.ss_video.clicked.connect(self.ClickStartVideo)
         left.layout().addWidget(self.ss_video)
 
+        left.layout().addWidget(range_hslider)
+        left.layout().addWidget(label1)
+
+        left.layout().addWidget(range_sslider)
+        left.layout().addWidget(label2)
+
+        left.layout().addWidget(range_vslider)
+        left.layout().addWidget(label3)
+
+        range_hslider.valueChanged.connect(lambda e: self.changeH(e))
+        range_sslider.valueChanged.connect(lambda e: self.changeS(e))
+        range_vslider.valueChanged.connect(lambda e: self.changeV(e))
+
         self.setLayout(QtW.QHBoxLayout())
         self.layout().addWidget(left)
         self.setGeometry(600, 300, 580, 800)
         self.activateWindow()
         self.show()
 
-########################################################################################################################
-#                                                   Start/stop Buttons                                                            #
-########################################################################################################################
-# Activates when Start/Stop video button is clicked to Start (ss_video
+    ########################################################################################################################
+    #                                                   Start/stop Buttons                                                            #
+    ########################################################################################################################
+    # Activates when Start/Stop video button is clicked to Start (ss_video
     def ClickStartVideo(self):
         # Change label color to light blue
         self.ss_video.clicked.disconnect(self.ClickStartVideo)
@@ -132,24 +144,52 @@ class DemoWidget(QtW.QWidget):
         self.ss_video.clicked.disconnect(self.thread.stop)
         self.ss_video.clicked.connect(self.ClickStartVideo)
 
-########################################################################################################################
-#                                                   Actions                                                            #
-########################################################################################################################
+    ########################################################################################################################
+    #                                                   Actions                                                            #
+    ########################################################################################################################
     def update_image(self, cv_img):
         """Updates the image_label with a new opencv image"""
         qt_img = self.convert_cv_qt(cv_img)
         self.image_label.setPixmap(qt_img)
 
-
     def convert_cv_qt(self, cv_img):
+        lower = np.array([self.hLow, self.sLow, self.vLow], dtype="uint8")
+        upper = np.array([self.hHigh, self.sHigh, self.vHigh], dtype="uint8")
         """Convert from an opencv image to QPixmap"""
         rgb_image = cv2.cvtColor(cv_img, cv2.COLOR_BGR2HSV)
+        # Generate Binary Skin Mask
+        skinMask = cv2.inRange(rgb_image, lower, upper)
+        skinMask = skinMask.astype("uint8")
+        # apply a series of erosions and dilations to the mask
+        # using an elliptical kernel
+        kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5))
+        # skinMask = cv2.erode(skinMask, kernel, iterations=3)
+        skinMask = cv2.dilate(skinMask, kernel, iterations=5)
+        skinMask = cv2.GaussianBlur(skinMask, (3, 3), 0)
+        bin_img = cv2.cvtColor(skinMask, cv2.COLOR_GRAY2RGB)
         h, w, ch = rgb_image.shape
         bytes_per_line = ch * w
-        convert_to_Qt_format = QtGui.QImage(rgb_image.data, w, h, bytes_per_line, QtGui.QImage.Format_RGB888)
-        p = convert_to_Qt_format.scaled(self.display_width, self.display_height, Qt.KeepAspectRatio)
-        #p = convert_to_Qt_format.scaled(801, 801, Qt.KeepAspectRatio)
-        return QPixmap.fromImage(p)
+        # skinMask = skinMask.astype(np.int64)
+        convert_to_Qt_format = QtGui.QImage(bin_img.data, w, h, bytes_per_line, QtGui.QImage.Format_RGB888)
+        # p = convert_to_Qt_format.scaled(801, 801, Qt.KeepAspectRatio)
+        return QPixmap.fromImage(convert_to_Qt_format)
+
+    # =======================Slider Actions=============================
+
+    def changeH(self, e):
+        self.hLow = e[0]
+        self.hHigh = e[1]
+
+    def changeS(self, e):
+        self.sLow = e[0]
+        self.sHigh = e[1]
+
+    def changeV(self, e):
+        self.vLow = e[0]
+        self.vHigh = e[1]
+
+
+# ===================
 
 
 if __name__ == "__main__":

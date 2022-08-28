@@ -1,9 +1,9 @@
+from VideFunctions import VideoThread
 from superqt import QRangeSlider
 from qtrangeslider import QRangeSlider
 from qtrangeslider.qtcompat import QtCore
 from qtrangeslider.qtcompat import QtWidgets as QtW
 from qtrangeslider import QLabeledRangeSlider
-from UI import VideoThread
 from PyQt5 import QtGui
 from PyQt5.QtWidgets import QLabel, QPushButton
 from PyQt5.QtGui import QPixmap
@@ -41,7 +41,7 @@ QRangeSlider {
 """
 
 
-class DemoWidget(QtW.QWidget):
+class calibrationWidget(QtW.QWidget):
     def __init__(self) -> None:
         super().__init__()
 
@@ -90,7 +90,7 @@ class DemoWidget(QtW.QWidget):
         self.image_label.setFixedWidth(self.display_width)
         self.image_label.setFixedHeight(self.display_height)
         self.image_label.setStyleSheet("background : black;")
-        left.layout().addWidget(self.image_label)
+        #left.layout().addWidget(self.image_label)
 
         # Button to start video
         self.ss_video = QPushButton()
@@ -98,7 +98,7 @@ class DemoWidget(QtW.QWidget):
         self.ss_video.move(350, 50)
         self.ss_video.resize(150, 50)
         self.ss_video.clicked.connect(self.ClickStartVideo)
-        left.layout().addWidget(self.ss_video)
+        #left.layout().addWidget(self.ss_video)
 
         left.layout().addWidget(range_hslider)
         left.layout().addWidget(label1)
@@ -109,12 +109,34 @@ class DemoWidget(QtW.QWidget):
         left.layout().addWidget(range_vslider)
         left.layout().addWidget(label3)
 
+        self.ss_save = QPushButton()
+        self.ss_save.setText('Save configuration')
+        self.ss_save.clicked.connect(self.ClickStartVideo)
+        self.ss_save.setFixedHeight(150)
+
+        right = QtW.QWidget()
+        right.setLayout(QtW.QVBoxLayout())
+        right.layout().addWidget(self.ss_save)
+
+        top = QtW.QWidget()
+        top.setLayout(QtW.QVBoxLayout())
+        top.layout().addWidget(self.image_label)
+        top.layout().addWidget(self.ss_video)
+
+        bottom =QtW.QWidget()
+        bottom.setLayout(QtW.QHBoxLayout())
+        bottom.layout().addWidget(left)
+        bottom.layout().addWidget(right)
+
+
+
         range_hslider.valueChanged.connect(lambda e: self.changeH(e))
         range_sslider.valueChanged.connect(lambda e: self.changeS(e))
         range_vslider.valueChanged.connect(lambda e: self.changeV(e))
 
         self.setLayout(QtW.QHBoxLayout())
-        self.layout().addWidget(left)
+        self.layout().addWidget(top)
+        top.layout().addWidget(bottom)
         self.setGeometry(600, 300, 580, 800)
         self.activateWindow()
         self.show()
@@ -141,7 +163,7 @@ class DemoWidget(QtW.QWidget):
         self.vThread.change_pixmap_signal.disconnect()
         self.ss_video.setText('Start video')
         self.ss_video.clicked.disconnect(self.ClickStopVideo)
-        self.ss_video.clicked.disconnect(self.thread.stop)
+        self.ss_video.clicked.disconnect(self.vThread.stop)
         self.ss_video.clicked.connect(self.ClickStartVideo)
 
     ########################################################################################################################
@@ -201,7 +223,7 @@ if __name__ == "__main__":
     dest.mkdir(exist_ok=True)
 
     app = QtW.QApplication([])
-    demo = DemoWidget()
+    demo = calibrationWidget()
 
     if "-snap" in sys.argv:
         import platform

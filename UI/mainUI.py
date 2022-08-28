@@ -5,36 +5,16 @@ from PyQt5.QtMultimedia import QCameraInfo, QCamera, QCameraImageCapture
 from PyQt5.QtWidgets import *
 import sys
 from InputDialog import InputDialog
+from SkinCalibrator import *
 import cv2
 from PyQt5.QtCore import pyqtSignal, pyqtSlot, Qt, QThread
+from VideFunctions import VideoThread
 import numpy as np
 from plyer import notification
 
 
 ### Video player made for the GUI, credit to Evgeny Fomin and Antonio Domènech (As seen on github https://gist.github.com/docPhil99/ca4da12c9d6f29b9cea137b617c7b8b1)
-class VideoThread(QThread):
-    change_pixmap_signal = pyqtSignal(np.ndarray)
 
-    def __init__(self):
-        super().__init__()
-        self._run_flag = True
-        self._pnum = 0
-
-    def run(self):
-        # capture from web cam
-        self._run_flag = True
-        self.cap = cv2.VideoCapture(self._pnum)
-        while self._run_flag:
-            ret, cv_img = self.cap.read()
-            if ret:
-                self.change_pixmap_signal.emit(cv_img)
-        # shut down capture system
-        self.cap.release()
-
-
-    def stop(self):
-        """Sets run flag to False and waits for thread to finish"""
-        self._run_flag = False
 
 
 class MyWindow(QMainWindow):
@@ -57,7 +37,7 @@ class MyWindow(QMainWindow):
 ########################################################################################################################
     def initWindow(self):
         # create the video capture thread
-        self.thread = VideoThread()
+
 
         # Button to start video
         self.ss_video = QPushButton(self)
@@ -80,10 +60,15 @@ class MyWindow(QMainWindow):
         # adding this to tool bar
         toolbar.addWidget(camera_selector)
 
-        button_action = QAction("Camera settings", self)
-        button_action.setStatusTip("This is your button")
-        button_action.triggered.connect(self.showdialog)
-        toolbar.addAction(button_action)
+        button_camset = QAction("Camera settings", self)
+        button_camset.setStatusTip("This is your button")
+        button_camset.triggered.connect(self.showdialog)
+        toolbar.addAction(button_camset)
+
+        button_skin = QAction("Skin Calibration ", self)
+        button_skin.setStatusTip("This is your button")
+        button_skin.triggered.connect(self.showCalibration)
+        toolbar.addAction(button_skin)
 
         # Status bar
         self.status = QStatusBar()
@@ -153,6 +138,10 @@ class MyWindow(QMainWindow):
         self.dialog.show()
         if self.dialog.exec():
             print(self.dialog.getInputs())
+
+    def showCalibration(self):
+        calibration = calibrationWidget()
+        self.hide()
 
     def showNoti(selfs):
         # import win10toast

@@ -1,18 +1,14 @@
-from PyQt5 import QtGui
-from PyQt5.QtWidgets import QLabel, QPushButton
-from PyQt5.QtGui import QPixmap
-from PyQt5.QtMultimedia import QCameraInfo, QCamera, QCameraImageCapture
+
 from PyQt5.QtWidgets import *
 import sys
 from InputDialog import InputDialog
 from SkinCalibrator import *
 import cv2
-from PyQt5.QtCore import pyqtSignal, pyqtSlot, Qt, QThread
+from PyQt5.QtCore import pyqtSignal, pyqtSlot, Qt, QThread, QEventLoop, QTimer
 from VideFunctions import VideoThread
-import numpy as np
-from tensorflow import keras
-from keras.models import load_model
-from plyer import notification
+from Predictor import *
+from threading import Thread
+import time
 
 
 
@@ -34,27 +30,14 @@ class MyWindow(QMainWindow):
         self.setWindowFlags(
             Qt.Window | Qt.CustomizeWindowHint | Qt.WindowStaysOnTopHint | Qt.WindowCloseButtonHint | Qt.WindowMinMaxButtonsHint)
         self.show()
+        self.predictor = Predictor()
 
-        fmodel = keras.models.load_model('newmod.h5', compile=False)
+        self.sImg_shape = (480, 640, 3)
+        self.sImg = np.empty(self.sImg_shape)
 
-        vals = []
-        with open('segSettings.txt', 'r') as filehandle:
-            for line in filehandle:
-                # remove linebreak which is the last character of the string
-                currentPlace = line[:-1]
-                # add item to the list
-                # add item to the list
-                vals.append(currentPlace)
-            self.hLow = float(vals[0])
-            self.sLow = float(vals[1])
-            self.vLow = float(vals[2])
-            self.hHigh = float(vals[3])
-            self.sHigh = float(vals[4])
-            self.vHigh = float(vals[5])
-        print(self.vHigh)
-    ########################################################################################################################
-    #                                                   GUI Elements                                                            #
-    ########################################################################################################################
+########################################################################################################################
+#                                                   GUI Elements                                                            #
+########################################################################################################################
     def initWindow(self):
         # create the video capture thread
 
@@ -64,6 +47,14 @@ class MyWindow(QMainWindow):
         self.ss_video.move(350, 50)
         self.ss_video.resize(150, 50)
         self.ss_video.clicked.connect(self.ClickStartVideo)
+        #self.ss_video.clicked.connect(self.MakePrediction)
+
+        self.ss_test = QPushButton(self)
+        self.ss_test.setText('Make Single Prediction')
+        self.ss_test.move(350, 100)
+        self.ss_test.resize(150, 50)
+        self.ss_test.clicked.connect(self.MakePrediction)
+        #self.ss_video.clicked.connect(self.MakePrediction)
 
         # creating a tool bar
         toolbar = QToolBar("Camera Tool Bar")
@@ -105,9 +96,9 @@ class MyWindow(QMainWindow):
         self.image_label.setStyleSheet("background : black;")
         self.image_label.move(10, 40)
 
-    ########################################################################################################################
-    #                                                   Start/stop Buttons                                                            #
-    ########################################################################################################################
+########################################################################################################################
+#                                                   Start/stop Buttons                                                            #
+########################################################################################################################
     # Activates when Start/Stop video button is clicked to Start (ss_video
 
     def ClickStartVideo(self):
@@ -117,13 +108,15 @@ class MyWindow(QMainWindow):
         # Change button to stop
         self.ss_video.setText('Stop video')
         self.camThread.change_pixmap_signal.connect(self.update_image)
-        #self.vThread.change_pixmap_signal.connect(self.predict_rgb)
 
         # start the thread
         self.camThread.start()
+        self.predictor.start()
         self.ss_video.clicked.connect(self.camThread.stop)  # Stop the video if button clicked
         self.ss_video.clicked.connect(self.ClickStopVideo)
         self.vidConnectFlag = 1
+
+
 
     # Activates when Start/Stop video button is clicked to Stop (ss_video)
     def ClickStopVideo(self):
@@ -132,6 +125,7 @@ class MyWindow(QMainWindow):
         self.status.showMessage('Ready to start')
         self.ss_video.clicked.disconnect(self.ClickStopVideo)
         self.ss_video.clicked.disconnect(self.camThread.stop)
+        self.predictor.stop()
         self.ss_video.clicked.connect(self.ClickStartVideo)
         self.vidConnectFlag = 0
 
@@ -139,9 +133,16 @@ class MyWindow(QMainWindow):
     #                                                   Video  Actions                                                            #
     ########################################################################################################################
 
+    def MakePrediction(self):
+        self.predictor.tdebug(self.sImg)
+
     def update_image(self, cv_img):
         """Updates the image_label with a new opencv image"""
-        qt_img = self.convert_cv_qt(cv_img)
+        #print(type(cv_img))
+        self.sImg = cv_img
+       # print('Predictor Image')
+        self.predictor.updateImg(self.sImg)
+        qt_img = self.convert_cv_qt(self.sImg)
         self.image_label.setPixmap(qt_img)
 
     def convert_cv_qt(self, cv_img):
@@ -166,7 +167,7 @@ class MyWindow(QMainWindow):
         if self.vidConnectFlag == 1:
             self.camThread.stop()
             self.ClickStopVideo()
-        self.close()
+        self.hide()
 
     def showNoti(selfs):
         # import win10toast
@@ -184,27 +185,18 @@ class MyWindow(QMainWindow):
             self.camThread.stop()
             self.ClickStopVideo()
 
+    ##########################################################################################################################
+
+    # ===========================================PREDICTOR=========================================================
 
 
-##########################################################################################################################
+        #score = tf.nn.softmax(predictions[0])
+        #class_names = ['Close', 'LForward', 'LTurn', 'Neutral', 'PointIn', 'PointOut', 'RForward', 'RTurn']
+        #print(
+           # "This image most likely belongs to {} with a {:.2f} percent confidence."
+        #    .format(class_names[np.argmax(score)], 100 * np.max(score))
+       # )
 
-# ===========================================PREDICTOR=========================================================
-
-    def predict_rgb(image):
-        width = 64
-        height = 64
-        image = np.array(image, dtype='float32')
-        image /= 255
-        # pred_array = model.predict(image)
-        # print(f'pred_array: {pred_array}')
-
-
-        # result = gesture_names[np.argmax(pred_array)]
-        # print(f'Result: {result}')
-        # print(max(pred_array[0]))
-        # score = float("%0.2f" % (max(pred_array[0]) * 100))
-        # print(result)
-        # return result, score
 
 ##############################################################################################################
 

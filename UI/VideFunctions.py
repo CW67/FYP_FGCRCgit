@@ -1,4 +1,4 @@
-from PyQt5.QtCore import pyqtSignal,QThread
+from PyQt5.QtCore import pyqtSignal,QThread, QTimer,QEventLoop
 import cv2
 import numpy as np
 
@@ -14,7 +14,6 @@ class VideoThread(QThread):
     def setCam(self, cnum):
         self._pnum = cnum
 
-
     def run(self):
         # capture from web cam
         self._run_flag = True
@@ -22,9 +21,12 @@ class VideoThread(QThread):
         while self._run_flag:
             ret, cv_img = self.cap.read()
             if ret:
+                dim = (640, 480)
+                cv_img = cv2.resize(cv_img, dim)
                 self.change_pixmap_signal.emit(cv_img)
         # shut down capture system
         self.cap.release()
+
 
 
     def stop(self):

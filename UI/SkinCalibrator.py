@@ -66,17 +66,17 @@ class calibrationWidget(QtW.QWidget):
         self.range_hslider = QLabeledRangeSlider(QtCore.Qt.Horizontal)
         self.range_hslider.setMaximumWidth(400)
         self.range_hslider.setRange(0, 255)
-        self.range_hslider.setValue((0, 255))
+
 
         self.range_sslider = QLabeledRangeSlider(QtCore.Qt.Horizontal)
         self.range_sslider.setMaximumWidth(400)
         self.range_sslider.setRange(0, 255)
-        self.range_sslider.setValue((0, 255))
 
         self.range_vslider = QLabeledRangeSlider(QtCore.Qt.Horizontal)
         self.range_vslider.setMaximumWidth(400)
         self.range_vslider.setRange(0, 255)
-        self.range_vslider.setValue((0, 255))
+
+        self.loadSeg()
 
 
         label1 = QtW.QLabel("Hue Value")
@@ -220,7 +220,7 @@ class calibrationWidget(QtW.QWidget):
         lower = np.array([self.hLow, self.sLow, self.vLow], dtype="uint8")
         upper = np.array([self.hHigh, self.sHigh, self.vHigh], dtype="uint8")
         """Convert from an opencv image to QPixmap"""
-        rgb_image = cv2.cvtColor(cv_img, cv2.COLOR_BGR2HSV)
+        rgb_image = cv2.cvtColor(cv_img, cv2.COLOR_RGB2HSV)
         # Generate Binary Skin Mask
         skinMask = cv2.inRange(rgb_image, lower, upper)
         skinMask = skinMask.astype("uint8")

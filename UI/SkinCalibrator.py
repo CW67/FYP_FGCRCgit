@@ -130,7 +130,7 @@ class calibrationWidget(QtW.QWidget):
         #Save button
         self.ss_save = QPushButton()
         self.ss_save.setText('Save configuration')
-        self.ss_save.clicked.connect(self.loadSeg)
+        self.ss_save.clicked.connect(self.saveSeg)
         self.ss_save.setFixedHeight(150)
 
         left = QtW.QWidget()
@@ -265,7 +265,6 @@ class calibrationWidget(QtW.QWidget):
 
     def loadSeg(self):
         vals = []
-
         # open file and read the content in a list
         with open('segSettings.txt', 'r') as filehandle:
             for line in filehandle:
@@ -275,7 +274,6 @@ class calibrationWidget(QtW.QWidget):
                 # add item to the list
                 # add item to the list
                 vals.append(currentPlace)
-
             self.hLow = float(vals[0])
             self.sLow = float(vals[1])
             self.vLow = float(vals[2])

@@ -10,7 +10,10 @@ import cv2
 from PyQt5.QtCore import pyqtSignal, pyqtSlot, Qt, QThread
 from VideFunctions import VideoThread
 import numpy as np
+from tensorflow import keras
+from keras.models import load_model
 from plyer import notification
+
 
 
 ### Video player made for the GUI, credit to Evgeny Fomin and Antonio Domènech (As seen on github https://gist.github.com/docPhil99/ca4da12c9d6f29b9cea137b617c7b8b1)
@@ -32,6 +35,23 @@ class MyWindow(QMainWindow):
             Qt.Window | Qt.CustomizeWindowHint | Qt.WindowStaysOnTopHint | Qt.WindowCloseButtonHint | Qt.WindowMinMaxButtonsHint)
         self.show()
 
+        fmodel = keras.models.load_model('newmod.h5', compile=False)
+
+        vals = []
+        with open('segSettings.txt', 'r') as filehandle:
+            for line in filehandle:
+                # remove linebreak which is the last character of the string
+                currentPlace = line[:-1]
+                # add item to the list
+                # add item to the list
+                vals.append(currentPlace)
+            self.hLow = float(vals[0])
+            self.sLow = float(vals[1])
+            self.vLow = float(vals[2])
+            self.hHigh = float(vals[3])
+            self.sHigh = float(vals[4])
+            self.vHigh = float(vals[5])
+        print(self.vHigh)
     ########################################################################################################################
     #                                                   GUI Elements                                                            #
     ########################################################################################################################
@@ -61,13 +81,13 @@ class MyWindow(QMainWindow):
         # adding this to tool bar
         toolbar.addWidget(camera_selector)
 
-        button_camset = QAction("Camera settings", self)
-        button_camset.setStatusTip("This is your button")
+        button_camset = QAction("IP Camera", self)
+        button_camset.setStatusTip("Manually Input IP Camera")
         button_camset.triggered.connect(self.showdialog)
         toolbar.addAction(button_camset)
 
         button_skin = QAction("Skin Calibration ", self)
-        button_skin.setStatusTip("This is your button")
+        button_skin.setStatusTip("Calibrate how the system sees you")
         button_skin.triggered.connect(self.showCalibration)
         toolbar.addAction(button_skin)
 
@@ -97,6 +117,7 @@ class MyWindow(QMainWindow):
         # Change button to stop
         self.ss_video.setText('Stop video')
         self.camThread.change_pixmap_signal.connect(self.update_image)
+        #self.vThread.change_pixmap_signal.connect(self.predict_rgb)
 
         # start the thread
         self.camThread.start()
@@ -135,14 +156,17 @@ class MyWindow(QMainWindow):
 
     ####################################################################################
     def showdialog(self):
-        self.dialog = InputDialog(labels=["First", "Second"])
+        self.dialog = InputDialog(labels=["IP", "Password"])
         self.dialog.show()
         if self.dialog.exec():
             print(self.dialog.getInputs())
 
     def showCalibration(self):
         calibration = calibrationWidget()
-        self.hide()
+        if self.vidConnectFlag == 1:
+            self.camThread.stop()
+            self.ClickStopVideo()
+        self.close()
 
     def showNoti(selfs):
         # import win10toast
@@ -162,34 +186,25 @@ class MyWindow(QMainWindow):
 
 
 
-    # getter method
-    def get_camera(self):
-        return self._pnum
-
-    # setter method
-    def set_camera(self, x):
-        self._pnum = x
-
-
 ##########################################################################################################################
 
 # ===========================================PREDICTOR=========================================================
 
-def predict_rgb_image_vgg(image):
-    width = 64
-    height = 64
-    image = np.array(image, dtype='float32')
-    image /= 255
-    # pred_array = model.predict(image)
-    # print(f'pred_array: {pred_array}')
+    def predict_rgb(image):
+        width = 64
+        height = 64
+        image = np.array(image, dtype='float32')
+        image /= 255
+        # pred_array = model.predict(image)
+        # print(f'pred_array: {pred_array}')
 
 
-# result = gesture_names[np.argmax(pred_array)]
-# print(f'Result: {result}')
-# print(max(pred_array[0]))
-# score = float("%0.2f" % (max(pred_array[0]) * 100))
-# print(result)
-# return result, score
+        # result = gesture_names[np.argmax(pred_array)]
+        # print(f'Result: {result}')
+        # print(max(pred_array[0]))
+        # score = float("%0.2f" % (max(pred_array[0]) * 100))
+        # print(result)
+        # return result, score
 
 ##############################################################################################################
 

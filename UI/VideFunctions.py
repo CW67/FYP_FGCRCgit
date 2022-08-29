@@ -8,7 +8,12 @@ class VideoThread(QThread):
     def __init__(self):
         super().__init__()
         self._run_flag = True
+        #self._pnum = 'http://0.0.0.0:4747/mjpegfeed?640x480'
         self._pnum = 0
+
+    def setCam(self, cnum):
+        self._pnum = cnum
+
 
     def run(self):
         # capture from web cam

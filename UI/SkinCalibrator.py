@@ -5,12 +5,13 @@ from qtrangeslider.qtcompat import QtCore
 from qtrangeslider.qtcompat import QtWidgets as QtW
 from qtrangeslider import QLabeledRangeSlider
 from PyQt5 import QtGui
-from PyQt5.QtWidgets import QLabel, QPushButton
+from PyQt5.QtWidgets import QLabel, QPushButton, QComboBox
 from PyQt5.QtGui import QPixmap
 import cv2
 from PyQt5.QtCore import pyqtSignal, pyqtSlot, Qt, QThread
 import numpy as np
 from numpy import expand_dims
+from PyQt5.QtMultimedia import QCameraInfo
 
 QSS = """
 QSlider {
@@ -54,24 +55,30 @@ class calibrationWidget(QtW.QWidget):
         self.vLow = 0
         self.vHigh = 255
 
-        range_hslider = QLabeledRangeSlider(QtCore.Qt.Horizontal)
-        range_hslider.setMaximumWidth(400)
-        range_hslider.setRange(0, 255)
-        range_hslider.setValue((0, 255))
+        self.available_cameras = QCameraInfo.availableCameras()  # Getting available cameras
 
-        range_sslider = QLabeledRangeSlider(QtCore.Qt.Horizontal)
-        range_sslider.setMaximumWidth(400)
-        range_sslider.setRange(0, 255)
-        range_sslider.setValue((0, 255))
+        self.vidConnectFlag = 0
 
-        range_vslider = QLabeledRangeSlider(QtCore.Qt.Horizontal)
-        range_vslider.setMaximumWidth(400)
-        range_vslider.setRange(0, 255)
-        range_vslider.setValue((0, 255))
+        self.vThread = VideoThread()
 
-        left = QtW.QWidget()
-        left.setLayout(QtW.QVBoxLayout())
-        left.setContentsMargins(2, 2, 2, 2)
+
+
+        self.range_hslider = QLabeledRangeSlider(QtCore.Qt.Horizontal)
+        self.range_hslider.setMaximumWidth(400)
+        self.range_hslider.setRange(0, 255)
+        self.range_hslider.setValue((0, 255))
+
+        self.range_sslider = QLabeledRangeSlider(QtCore.Qt.Horizontal)
+        self.range_sslider.setMaximumWidth(400)
+        self.range_sslider.setRange(0, 255)
+        self.range_sslider.setValue((0, 255))
+
+        self.range_vslider = QLabeledRangeSlider(QtCore.Qt.Horizontal)
+        self.range_vslider.setMaximumWidth(400)
+        self.range_vslider.setRange(0, 255)
+        self.range_vslider.setValue((0, 255))
+
+
         label1 = QtW.QLabel("Hue Value")
         # label1.setSizePolicy(szp, szp)
 
@@ -83,14 +90,20 @@ class calibrationWidget(QtW.QWidget):
 
         # Video screen
         self.vThread = VideoThread()
-        self.image_label = QLabel()
-        self.display_width = 640
-        self.display_height = 480
-        self.image_label.resize(self.display_width, self.display_height)
-        self.image_label.setFixedWidth(self.display_width)
-        self.image_label.setFixedHeight(self.display_height)
-        self.image_label.setStyleSheet("background : black;")
-        #left.layout().addWidget(self.image_label)
+        self.video_label = QLabel()
+        self.display_width = 320
+        self.display_height = 240
+        self.video_label.resize(self.display_width, self.display_height)
+        self.video_label.setFixedWidth(self.display_width)
+        self.video_label.setFixedHeight(self.display_height)
+        self.video_label.setStyleSheet("background : black;")
+
+        self.video_label2 = QLabel()
+        self.video_label2.resize(self.display_width, self.display_height)
+        self.video_label2.setFixedWidth(self.display_width)
+        self.video_label2.setFixedHeight(self.display_height)
+        self.video_label2.setStyleSheet("background : black;")
+
 
         # Button to start video
         self.ss_video = QPushButton()
@@ -100,19 +113,38 @@ class calibrationWidget(QtW.QWidget):
         self.ss_video.clicked.connect(self.ClickStartVideo)
         #left.layout().addWidget(self.ss_video)
 
-        left.layout().addWidget(range_hslider)
-        left.layout().addWidget(label1)
+        #Camera Selector
+        camera_selector = QComboBox()
+        camera_selector.setStatusTip("Choose camera to take pictures")
+        # adding tool tip to it
+        camera_selector.setToolTip("Select Camera")
+        camera_selector.setToolTipDuration(2500)
+        # adding items to the combo box
+        camera_selector.addItems([camera.description()
+                                  for camera in self.available_cameras])
+        # Camera selection function
+        camera_selector.activated[int].connect(self.returnSelected)
+        camera_selector.setFixedWidth(200)
 
-        left.layout().addWidget(range_sslider)
-        left.layout().addWidget(label2)
 
-        left.layout().addWidget(range_vslider)
-        left.layout().addWidget(label3)
-
+        #Save button
         self.ss_save = QPushButton()
         self.ss_save.setText('Save configuration')
-        self.ss_save.clicked.connect(self.ClickStartVideo)
+        self.ss_save.clicked.connect(self.loadSeg)
         self.ss_save.setFixedHeight(150)
+
+        left = QtW.QWidget()
+        left.setLayout(QtW.QVBoxLayout())
+        left.setContentsMargins(2, 2, 2, 2)
+
+        left.layout().addWidget(self.range_hslider)
+        left.layout().addWidget(label1)
+
+        left.layout().addWidget(self.range_sslider)
+        left.layout().addWidget(label2)
+
+        left.layout().addWidget(self.range_vslider)
+        left.layout().addWidget(label3)
 
         right = QtW.QWidget()
         right.setLayout(QtW.QVBoxLayout())
@@ -120,24 +152,30 @@ class calibrationWidget(QtW.QWidget):
 
         top = QtW.QWidget()
         top.setLayout(QtW.QVBoxLayout())
-        top.layout().addWidget(self.image_label)
+        top.layout().addWidget(camera_selector)
+        topvideo = QtW.QWidget()
+        topvideo.setLayout(QtW.QHBoxLayout())
+        topvideo.layout().addWidget(self.video_label)
+        topvideo.layout().addWidget(self.video_label2)
+        top.layout().addWidget(topvideo)
         top.layout().addWidget(self.ss_video)
+
+        mid = QtW.QWidget()
+        mid.setLayout(QtW.QHBoxLayout())
 
         bottom =QtW.QWidget()
         bottom.setLayout(QtW.QHBoxLayout())
         bottom.layout().addWidget(left)
         bottom.layout().addWidget(right)
 
-
-
-        range_hslider.valueChanged.connect(lambda e: self.changeH(e))
-        range_sslider.valueChanged.connect(lambda e: self.changeS(e))
-        range_vslider.valueChanged.connect(lambda e: self.changeV(e))
+        self.range_hslider.valueChanged.connect(lambda e: self.changeH(e))
+        self.range_sslider.valueChanged.connect(lambda e: self.changeS(e))
+        self.range_vslider.valueChanged.connect(lambda e: self.changeV(e))
 
         self.setLayout(QtW.QHBoxLayout())
         self.layout().addWidget(top)
         top.layout().addWidget(bottom)
-        self.setGeometry(600, 300, 580, 800)
+        self.setGeometry(600, 300, 580, 500)
         self.activateWindow()
         self.show()
 
@@ -150,7 +188,6 @@ class calibrationWidget(QtW.QWidget):
         self.ss_video.clicked.disconnect(self.ClickStartVideo)
         # Change button to stop
         self.ss_video.setText('Stop video')
-        self.vThread = VideoThread()
         self.vThread.change_pixmap_signal.connect(self.update_image)
 
         # start the thread
@@ -172,7 +209,12 @@ class calibrationWidget(QtW.QWidget):
     def update_image(self, cv_img):
         """Updates the image_label with a new opencv image"""
         qt_img = self.convert_cv_qt(cv_img)
-        self.image_label.setPixmap(qt_img)
+        qt_imgB = self.convert_cv_Base(cv_img)
+        self.video_label.setPixmap(qt_img)
+        self.video_label2.setPixmap(qt_imgB)
+
+    def update_imageBase(self, cv_img):
+        """Updates the image_label with a new opencv image"""
 
     def convert_cv_qt(self, cv_img):
         lower = np.array([self.hLow, self.sLow, self.vLow], dtype="uint8")
@@ -193,10 +235,57 @@ class calibrationWidget(QtW.QWidget):
         bytes_per_line = ch * w
         # skinMask = skinMask.astype(np.int64)
         convert_to_Qt_format = QtGui.QImage(bin_img.data, w, h, bytes_per_line, QtGui.QImage.Format_RGB888)
+        p = convert_to_Qt_format.scaled(self.display_width, self.display_height, Qt.KeepAspectRatio)
         # p = convert_to_Qt_format.scaled(801, 801, Qt.KeepAspectRatio)
-        return QPixmap.fromImage(convert_to_Qt_format)
+        return QPixmap.fromImage(p)
 
-    # =======================Slider Actions=============================
+    def convert_cv_Base(self, cv_img):
+        """Convert from an opencv image to QPixmap"""
+        rgb_image = cv2.cvtColor(cv_img, cv2.COLOR_BGR2RGB)
+        h, w, ch = rgb_image.shape
+        bytes_per_line = ch * w
+        convert_to_Qt_format = QtGui.QImage(rgb_image.data, w, h, bytes_per_line, QtGui.QImage.Format_RGB888)
+        p = convert_to_Qt_format.scaled(self.display_width, self.display_height, Qt.KeepAspectRatio)
+        # p = convert_to_Qt_format.scaled(801, 801, Qt.KeepAspectRatio)
+        return QPixmap.fromImage(p)
+
+    def returnSelected(self, param):
+        print('The current highlighted index is: ', param)
+        self.vThread.setCam(param)
+        if self.vidConnectFlag == 1:
+            self.vThread.stop()
+            self.ClickStopVideo()
+
+    def saveSeg(self):
+        arr = [self.hLow, self.sLow, self.vLow, self.hHigh, self.sHigh, self.vHigh]
+        with open('segSettings.txt', 'w') as filehandle:
+            for listitem in arr:
+                filehandle.write('%s\n' % listitem)
+
+
+    def loadSeg(self):
+        vals = []
+
+        # open file and read the content in a list
+        with open('segSettings.txt', 'r') as filehandle:
+            for line in filehandle:
+                # remove linebreak which is the last character of the string
+                currentPlace = line[:-1]
+
+                # add item to the list
+                # add item to the list
+                vals.append(currentPlace)
+
+            self.hLow = float(vals[0])
+            self.sLow = float(vals[1])
+            self.vLow = float(vals[2])
+            self.hHigh = float(vals[3])
+            self.sHigh = float(vals[4])
+            self.vHigh = float(vals[5])
+            self.range_hslider.setValue((self.hLow, self.hHigh))
+            self.range_sslider.setValue((self.sLow, self.sHigh))
+            self.range_vslider.setValue((self.vLow, self.vHigh))
+# =======================Slider Actions=============================
 
     def changeH(self, e):
         self.hLow = e[0]

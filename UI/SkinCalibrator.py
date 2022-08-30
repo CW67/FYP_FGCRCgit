@@ -42,9 +42,12 @@ QRangeSlider {
 """
 
 
-class calibrationWidget(QtW.QWidget):
+class calibrationWidget(QtW.QDialog):
     def __init__(self) -> None:
         super(calibrationWidget, self).__init__()
+
+        self.setWindowFlags(
+            Qt.Window | Qt.CustomizeWindowHint | Qt.WindowStaysOnTopHint | Qt.WindowCloseButtonHint | Qt.WindowMinMaxButtonsHint)
 
         self.hLow = 0
         self.hHigh = 255
@@ -133,6 +136,12 @@ class calibrationWidget(QtW.QWidget):
         self.ss_save.clicked.connect(self.saveSeg)
         self.ss_save.setFixedHeight(150)
 
+        #Save button
+        self.ss_back = QPushButton()
+        self.ss_back.setText('Back')
+        self.ss_back.clicked.connect(self.backMenu)
+        self.ss_back.setFixedWidth(50)
+
         left = QtW.QWidget()
         left.setLayout(QtW.QVBoxLayout())
         left.setContentsMargins(2, 2, 2, 2)
@@ -152,6 +161,7 @@ class calibrationWidget(QtW.QWidget):
 
         top = QtW.QWidget()
         top.setLayout(QtW.QVBoxLayout())
+        top.layout().addWidget(self.ss_back)
         top.layout().addWidget(camera_selector)
         topvideo = QtW.QWidget()
         topvideo.setLayout(QtW.QHBoxLayout())
@@ -177,7 +187,6 @@ class calibrationWidget(QtW.QWidget):
         top.layout().addWidget(bottom)
         self.setGeometry(600, 300, 580, 500)
         self.activateWindow()
-        self.show()
 
     ########################################################################################################################
     #                                                   Start/stop Buttons                                                            #
@@ -194,6 +203,7 @@ class calibrationWidget(QtW.QWidget):
         self.vThread.start()
         self.ss_video.clicked.connect(self.vThread.stop)  # Stop the video if button clicked
         self.ss_video.clicked.connect(self.ClickStopVideo)
+        self.vidConnectFlag = 1
 
     # Activates when Start/Stop video button is clicked to Stop (ss_video)
     def ClickStopVideo(self):
@@ -202,6 +212,7 @@ class calibrationWidget(QtW.QWidget):
         self.ss_video.clicked.disconnect(self.ClickStopVideo)
         self.ss_video.clicked.disconnect(self.vThread.stop)
         self.ss_video.clicked.connect(self.ClickStartVideo)
+        self.vidConnectFlag = 0
 
     ########################################################################################################################
     #                                                   Actions                                                            #
@@ -283,6 +294,12 @@ class calibrationWidget(QtW.QWidget):
             self.range_hslider.setValue((self.hLow, self.hHigh))
             self.range_sslider.setValue((self.sLow, self.sHigh))
             self.range_vslider.setValue((self.vLow, self.vHigh))
+
+    def backMenu(self):
+        if self.vidConnectFlag == 1:
+            self.vThread.stop()
+            self.ClickStopVideo()
+
 # =======================Slider Actions=============================
 
     def changeH(self, e):
@@ -311,6 +328,7 @@ if __name__ == "__main__":
 
     app = QtW.QApplication([])
     demo = calibrationWidget()
+    demo.show()
 
     if "-snap" in sys.argv:
         import platform

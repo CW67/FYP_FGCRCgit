@@ -10,14 +10,19 @@ import numpy as np
 import cv2
 import time
 from PyQt5.QtCore import (QCoreApplication, QObject, QRunnable, QThread,
-                          QThreadPool, pyqtSignal)
+                          QThreadPool, pyqtSignal,QTimer)
 from collections import deque
 
+
 class Predictor(QThread):
-    def __init__(self):
+    def __init__(self, msg: deque):
         super().__init__()
+
+        #Message used to send name of  gesture detected back to main UI
+        self.msg = msg
+
+        #Load the saved settings from segmentation calibration
         vals = []
-        gStor = []
         with open('segSettings.txt', 'r') as filehandle:
             for line in filehandle:
                 # remove linebreak which is the last character of the string
@@ -32,37 +37,80 @@ class Predictor(QThread):
             self.sHigh = float(vals[4])
             self.vHigh = float(vals[5])
 
+
+        #Load the prediction model
         self.fmodel = keras.models.load_model('newmod3.h5', compile=False)
         self._run_flag = True
         self.sImg_shape = (480, 640, 3)
         self.sImg = np.empty(self.sImg_shape)
         self.all_zeros = not np.any(self.sImg)
-        self.gHist = deque([], maxlen=1)
+
+        #gHist stores history of last 5 predicted gestures
+        self.gHist = deque([], maxlen=5)
+
+        #initialize gesture names
         self.class_names = ['Close', 'LForward', 'LTurn', 'Neutral', 'PointIn', 'PointOut', 'RForward', 'RTurn']
-        self.initGestures
+        self.statusMessage = "None"
 
+        self.gaLF = Gesture(1, 'Close', '%{VK_TAB} 2', self.gHist)
+        self.gaLT = Gesture(1, 'Close', '%{VK_TAB} 2', self.gHist)
+        self.gaPI = Gesture(1, 'Close', '%{VK_TAB} 2', self.gHist)
+        self.gaPO = Gesture(1, 'Close', '%{VK_TAB} 2', self.gHist)
+        self.gaRF = Gesture(1, 'Close', '%{VK_TAB} 2', self.gHist)
+        self.gaRT = Gesture(1, 'Close', '%{VK_TAB} 2', self.gHist)
+        self.gaC = Gesture(1, 'Close', '%{VK_TAB} 2', self.gHist)
+        self.gs = Gesture(1, 'Close', '%{VK_TAB} 2', self.gHist)
         print(self.all_zeros)
+        self._events = {}
 
-    def initGestures(self):
-        # Modes: 0- Default/function after neutral, 1: Continuos, 2: Function after any other gesture
-        # mode, gesture, binding, history
-        self.g1 = Gesture(0, 'Close', '^t', self.gHist )
+#=======================Functions to dispatch event to main UI===============================
+    def addEventListener(self, name, func):
+        if name not in self._events:
+            self._events[name] = [func]
+        else:
+            self._events[name].append(func)
 
+    def dispatchEvent(self, name):
+        functions = self._events.get(name, [])
+        for func in functions:
+            QTimer.singleShot(0, func)
+
+#===========================Functino to update the image loaded in the predictor from the main UI================
     def updateImg(self, image):
         self.sImg = image
         #print(self.sImg.shape)
         self.all_zeros = not np.any(self.sImg)
 
     #def ExecuteGesture(self, ):
+    #def onPred(self):
 
+
+#===========================================Run method============================================
     def run(self):
+        vals = []
+        with open('segSettings.txt', 'r') as filehandle:
+            for line in filehandle:
+                # remove linebreak which is the last character of the string
+                currentPlace = line[:-1]
+                # add item to the list
+                # add item to the list
+                vals.append(currentPlace)
+            self.hLow = float(vals[0])
+            self.sLow = float(vals[1])
+            self.vLow = float(vals[2])
+            self.hHigh = float(vals[3])
+            self.sHigh = float(vals[4])
+            self.vHigh = float(vals[5])
         self._run_flag = True
         self.pNeutralFlag = 0
         count = 0
+        self.gHist.append('Neutral')
         while self._run_flag:
-            time.sleep(0.2)
+            time.sleep(0.3)
             if self.all_zeros:
                 print('Predictor not running: no image detected')
+                self.msg.append('nothing happening')
+                self.dispatchEvent('Hello')
             else:
                 prediction = self.predict_rgb(self.sImg)
                 #elif self.PNeutralFlag == 1 and gHist[0] == prediction and gHist[0] == gHist[1] :
@@ -81,20 +129,26 @@ class Predictor(QThread):
                 if prediction == 'PointIn':
                     print('Performing PointIn Action')
                 if prediction == 'PointOut':
+                    self.g1.sendAction()
                     print('Performing PointOut Action')
                 if prediction == 'fail':
                     print('Failed too recognize gesture')
+                print('GHIST is currently')
+                print(self.g1.getHistory()[0])
                 self.gHist.append(prediction)
+                print(self.hLow)
 
 
 
     def stop(self):
         """Sets run flag to False and waits for thread to finish"""
+        self.gHist.clear()
         self.sImg = np.empty(self.sImg_shape)
         self.all_zeros = not np.any(self.sImg)
         self._run_flag = False
 
 
+#=============================Function to apply pre-processing to the collected image and perform prediction=============
     def predict_rgb(self, image):
         width = 64
         height = 64

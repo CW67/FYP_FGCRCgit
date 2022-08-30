@@ -9,6 +9,7 @@ from VidThread import VideoThread
 from Predictor import *
 from threading import Thread
 import time
+from collections import deque
 
 
 
@@ -30,8 +31,10 @@ class MyWindow(QMainWindow):
         self.setWindowFlags(
             Qt.Window | Qt.CustomizeWindowHint | Qt.WindowStaysOnTopHint | Qt.WindowCloseButtonHint | Qt.WindowMinMaxButtonsHint)
         self.show()
-        self.predictor = Predictor()
-
+        self.gesture_message = deque([], maxlen=1)
+        self.predictor = Predictor(self.gesture_message)
+        self.predFlag = False
+        self.predictor.addEventListener("Hello", self.foo)
         self.sImg_shape = (480, 640, 3)
         self.sImg = np.empty(self.sImg_shape)
 
@@ -55,6 +58,12 @@ class MyWindow(QMainWindow):
         self.ss_test.resize(150, 50)
         self.ss_test.clicked.connect(self.MakePrediction)
         #self.ss_video.clicked.connect(self.MakePrediction)
+
+        self.ss_pred = QPushButton(self)
+        self.ss_pred.setText('Connect controlling')
+        self.ss_pred.move(350, 150)
+        self.ss_pred.resize(150, 50)
+        self.ss_pred.clicked.connect(self.connect_predictor)
 
         # creating a tool bar
         toolbar = QToolBar("Camera Tool Bar")
@@ -108,33 +117,30 @@ class MyWindow(QMainWindow):
         # Change button to stop
         self.ss_video.setText('Stop video')
         self.camThread.change_pixmap_signal.connect(self.update_image)
-
         # start the thread
         self.camThread.start()
-        self.predictor.start()
+        #self.predictor.start()
         self.ss_video.clicked.connect(self.camThread.stop)  # Stop the video if button clicked
         self.ss_video.clicked.connect(self.ClickStopVideo)
         self.vidConnectFlag = 1
-
-
+        #self.predFlag = True
 
     # Activates when Start/Stop video button is clicked to Stop (ss_video)
     def ClickStopVideo(self):
+        self.disconnect_predictor()
         self.camThread.change_pixmap_signal.disconnect()
         self.ss_video.setText('Start video')
         self.status.showMessage('Ready to start')
         self.ss_video.clicked.disconnect(self.ClickStopVideo)
         self.ss_video.clicked.disconnect(self.camThread.stop)
-        self.predictor.stop()
         self.ss_video.clicked.connect(self.ClickStartVideo)
         self.vidConnectFlag = 0
+
 
     ########################################################################################################################
     #                                                   Video  Actions                                                            #
     ########################################################################################################################
 
-    def MakePrediction(self):
-        self.predictor.tdebug(self.sImg)
 
     def update_image(self, cv_img):
         """Updates the image_label with a new opencv image"""
@@ -156,6 +162,19 @@ class MyWindow(QMainWindow):
         return QPixmap.fromImage(p)
 
     ####################################################################################
+    def connect_predictor(self):
+        self.predictor.start()
+        self.ss_pred.clicked.connect(self.disconnect_predictor)
+        self.ss_pred.setText('Disconnect controls')
+
+    def disconnect_predictor(self):
+        self.predictor.stop()
+        self.ss_pred.clicked.connect(self.connect_predictor)
+        self.ss_pred.setText('Connect controls')
+
+    def MakePrediction(self):
+        self.predictor.tdebug(self.sImg)
+
     def showdialog(self):
         self.dialog = InputDialog(labels=["IP", "Password"])
         self.dialog.show()
@@ -167,7 +186,8 @@ class MyWindow(QMainWindow):
         if self.vidConnectFlag == 1:
             self.camThread.stop()
             self.ClickStopVideo()
-        self.hide()
+        calibration.exec_()
+
 
     def showNoti(selfs):
         # import win10toast
@@ -175,6 +195,9 @@ class MyWindow(QMainWindow):
         # create an object to ToastNotifier class
         n = ToastNotifier()
         n.show_toast("GEEKSFORGEEKS", "You got notification", threaded=True)
+
+    def foo(self):
+        self.status.showMessage(self.gesture_message[-1])
 
     ###################################################CAMERA SELECTION======================================================
 

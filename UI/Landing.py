@@ -1,4 +1,4 @@
-from VideFunctions import VideoThread
+from VidThread import VideoThread
 from superqt import QRangeSlider
 from qtrangeslider import QRangeSlider
 from qtrangeslider.qtcompat import QtCore

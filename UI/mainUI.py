@@ -5,7 +5,7 @@ from InputDialog import InputDialog
 from SkinCalibrator import *
 import cv2
 from PyQt5.QtCore import pyqtSignal, pyqtSlot, Qt, QThread, QEventLoop, QTimer
-from VideFunctions import VideoThread
+from VidThread import VideoThread
 from Predictor import *
 from threading import Thread
 import time

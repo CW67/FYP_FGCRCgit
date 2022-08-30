@@ -1,4 +1,4 @@
-from VideFunctions import VideoThread
+from VidThread import VideoThread
 from superqt import QRangeSlider
 from qtrangeslider import QRangeSlider
 from qtrangeslider.qtcompat import QtCore
@@ -44,7 +44,7 @@ QRangeSlider {
 
 class calibrationWidget(QtW.QWidget):
     def __init__(self) -> None:
-        super().__init__()
+        super(calibrationWidget, self).__init__()
 
         self.hLow = 0
         self.hHigh = 255

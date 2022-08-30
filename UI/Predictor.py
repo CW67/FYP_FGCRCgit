@@ -52,14 +52,14 @@ class Predictor(QThread):
         self.class_names = ['Close', 'LForward', 'LTurn', 'Neutral', 'PointIn', 'PointOut', 'RForward', 'RTurn']
         self.statusMessage = "None"
 
-        self.gaLF = Gesture(1, 'Close', '%{VK_TAB} 2', self.gHist)
-        self.gaLT = Gesture(1, 'Close', '%{VK_TAB} 2', self.gHist)
-        self.gaPI = Gesture(1, 'Close', '%{VK_TAB} 2', self.gHist)
-        self.gaPO = Gesture(1, 'Close', '%{VK_TAB} 2', self.gHist)
-        self.gaRF = Gesture(1, 'Close', '%{VK_TAB} 2', self.gHist)
-        self.gaRT = Gesture(1, 'Close', '%{VK_TAB} 2', self.gHist)
-        self.gaC = Gesture(1, 'Close', '%{VK_TAB} 2', self.gHist)
-        self.gs = Gesture(1, 'Close', '%{VK_TAB} 2', self.gHist)
+        self.gaLF = Gesture('md', 'LForward', '', self.gHist)
+        self.gaLT = Gesture('ml', 'LTurn', '', self.gHist)
+        self.gaPI = Gesture('mc', 'PointIn', '2', self.gHist)
+        self.gaPO = Gesture(1, 'PointOut', '%{VK_TAB} 2', self.gHist)
+        self.gaRF = Gesture('mu', 'RForward', '%{VK_TAB} 2', self.gHist)
+        self.gaRT = Gesture('mr', 'RTurn', '', self.gHist)
+        self.gn = Gesture(1, 'Neutral', '', self.gHist)
+        self.gs = Gesture(1, 'Close', '', self.gHist)
         print(self.all_zeros)
         self._events = {}
 
@@ -106,7 +106,7 @@ class Predictor(QThread):
         count = 0
         self.gHist.append('Neutral')
         while self._run_flag:
-            time.sleep(0.3)
+            #time.sleep(0.3)
             if self.all_zeros:
                 print('Predictor not running: no image detected')
                 self.msg.append('nothing happening')
@@ -119,22 +119,26 @@ class Predictor(QThread):
                 if prediction == 'Close':
                     print('Performing Close Action')
                 if prediction == 'LForward':
+                    self.gaLF.sendAction()
                     print('Performing LForward Action')
                 if prediction == 'LTurn':
+                    self.gaLT.sendAction()
                     print('Performing LTurn Action')
                 if prediction == 'RForward':
+                    self.gaRF.sendAction()
                     print('Performing RFoward Action')
                 if prediction == 'RTurn':
+                    self.gaRT.sendAction()
                     print('Performing RTurn Action')
                 if prediction == 'PointIn':
+                    self.gaPI.sendAction()
                     print('Performing PointIn Action')
                 if prediction == 'PointOut':
-                    self.g1.sendAction()
+                    #self.gaPO.sendAction()
                     print('Performing PointOut Action')
                 if prediction == 'fail':
                     print('Failed too recognize gesture')
                 print('GHIST is currently')
-                print(self.g1.getHistory()[0])
                 self.gHist.append(prediction)
                 print(self.hLow)
 
@@ -184,8 +188,8 @@ class Predictor(QThread):
         #)
         score = float("%0.2f" % (max(score) * 100))
         result = self.class_names[np.argmax(predictions)]
-        print(result)
-        print(score)
+        #print(result)
+        #print(score)
 
         if score > 70:
             return result

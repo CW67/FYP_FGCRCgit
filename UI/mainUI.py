@@ -119,6 +119,7 @@ class MyWindow(QMainWindow):
         self.camThread.change_pixmap_signal.connect(self.update_image)
         # start the thread
         self.camThread.start()
+        self.predictor.start()
         #self.predictor.start()
         self.ss_video.clicked.connect(self.camThread.stop)  # Stop the video if button clicked
         self.ss_video.clicked.connect(self.ClickStopVideo)
@@ -127,12 +128,12 @@ class MyWindow(QMainWindow):
 
     # Activates when Start/Stop video button is clicked to Stop (ss_video)
     def ClickStopVideo(self):
-        self.disconnect_predictor()
         self.camThread.change_pixmap_signal.disconnect()
         self.ss_video.setText('Start video')
         self.status.showMessage('Ready to start')
         self.ss_video.clicked.disconnect(self.ClickStopVideo)
         self.ss_video.clicked.disconnect(self.camThread.stop)
+        self.predictor.stop()
         self.ss_video.clicked.connect(self.ClickStartVideo)
         self.vidConnectFlag = 0
 
@@ -164,13 +165,13 @@ class MyWindow(QMainWindow):
     ####################################################################################
     def connect_predictor(self):
         self.predictor.start()
-        self.ss_pred.clicked.connect(self.disconnect_predictor)
         self.ss_pred.setText('Disconnect controls')
+        self.ss_pred.clicked.connect(self.disconnect_predictor)
 
     def disconnect_predictor(self):
         self.predictor.stop()
-        self.ss_pred.clicked.connect(self.connect_predictor)
         self.ss_pred.setText('Connect controls')
+        self.ss_pred.clicked.connect(self.connect_predictor)
 
     def MakePrediction(self):
         self.predictor.tdebug(self.sImg)

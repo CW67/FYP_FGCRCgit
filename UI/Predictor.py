@@ -39,7 +39,7 @@ class Predictor(QThread):
 
 
         #Load the prediction model
-        self.fmodel = keras.models.load_model('newmod3.h5', compile=False)
+        self.fmodel = keras.models.load_model('newmod4.h5', compile=False)
         self._run_flag = True
         self.sImg_shape = (480, 640, 3)
         self.sImg = np.empty(self.sImg_shape)
@@ -125,6 +125,7 @@ class Predictor(QThread):
 
 #===========================================Run method============================================
     def run(self):
+        self._run_flag = True
         vals = []
         with open('segSettings.txt', 'r') as filehandle:
             for line in filehandle:
@@ -140,7 +141,8 @@ class Predictor(QThread):
             self.sHigh = float(vals[4])
             self.vHigh = float(vals[5])
 
-        self._run_flag = True
+
+        self._close_flag = True
         self.pNeutralFlag = 0
         count = 0
         self.gHist.append('Neutral')
@@ -148,41 +150,45 @@ class Predictor(QThread):
             #time.sleep(0.3)
             if self.all_zeros:
                 print('Predictor not running: no image detected')
+                time.sleep(0.2)
                 self.msg.append('nothing happening')
                 self.dispatchEvent('Hello')
             else:
                 prediction = self.predict_rgb(self.sImg)
                 #elif self.PNeutralFlag == 1 and gHist[0] == prediction and gHist[0] == gHist[1] :
                 if prediction == 'Neutral':
-                    print('Gesture set to neutral')
-                if prediction == 'Close' and self.all_same():
-                    if self.gmode <2:
+                    self._close_flag == True
+                    print('Gesture set to neutral, mmode is')
+                    print(self.gmode)
+                if prediction == 'Close' and self.all_same() and self._close_flag:
+                    if self.gmode < 2:
                         self.gmode +=1
                     else:
                         self.gmode = 0
+                    #self._close_flag == False
                     print('Performing Close Action')
                 if prediction == 'LForward':
-                    self.gaLF.sendAction()
+                    #self.gaLF.sendAction()
                     print('Performing LForward Action')
                 if prediction == 'LTurn':
-                    self.gaLT.sendAction()
+                    #self.gaLT.sendAction()
                     print('Performing LTurn Action')
                 if prediction == 'RForward':
-                    self.gaRF.sendAction()
+                    #self.gaRF.sendAction()
                     print('Performing RFoward Action')
                 if prediction == 'RTurn':
-                    self.gaRT.sendAction()
+                    #self.gaRT.sendAction()
                     print('Performing RTurn Action')
                 if prediction == 'PointIn':
-                    self.gaPI.sendAction()
+                    #self.gaPI.sendAction()
                     print('Performing PointIn Action')
                 if prediction == 'PointOut':
-                    self.gaPO.sendAction()
+                    #self.gaPO.sendAction()
                     print('Performing PointOut Action')
                 if prediction == 'fail':
                     print('Failed too recognize gesture')
 
-                msgstr = 'performing' + prediction
+                msgstr = 'performing' + str(self._run_flag)
                 self.msg.append(msgstr)
                 self.dispatchEvent('Hello')
                 self.gHist.append(prediction)
@@ -191,10 +197,9 @@ class Predictor(QThread):
 
     def stop(self):
         """Sets run flag to False and waits for thread to finish"""
-        self.gHist.clear()
-        self.sImg = np.empty(self.sImg_shape)
-        self.all_zeros = not np.any(self.sImg)
         self._run_flag = False
+        self.sImg = np.empty(self.sImg_shape)
+
 
 
 #=============================Function to apply pre-processing to the collected image and perform prediction=============
@@ -207,7 +212,7 @@ class Predictor(QThread):
 
         # image = np.array(image, dtype='float32')
         # image /= 255
-
+        image =  image.astype(np.uint8)
         converted = cv2.cvtColor(image, cv2.COLOR_RGB2HSV)
         # Generate Binary Skin Mask
         skinMask = cv2.inRange(converted, lower, upper)
@@ -233,8 +238,8 @@ class Predictor(QThread):
         #)
         score = float("%0.2f" % (max(score) * 100))
         result = self.class_names[np.argmax(predictions)]
-        #print(result)
-        #print(score)
+        print(result)
+        print(score)
 
         if score > 70:
             return result
@@ -250,6 +255,7 @@ class Predictor(QThread):
 
         # image = np.array(image, dtype='float32')
         # image /= 255
+        image = image.astype(np.uint8)
 
         converted = cv2.cvtColor(image, cv2.COLOR_RGB2HSV)
         # Generate Binary Skin Mask

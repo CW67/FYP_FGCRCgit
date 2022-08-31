@@ -5,7 +5,7 @@ from numpy import expand_dims
 from keras.utils import img_to_array
 from keras.models import load_model
 from plyer import notification
-from Gesture import *
+from GestureHandler import GestureHandler,ActionSet
 import numpy as np
 import cv2
 import time
@@ -52,16 +52,50 @@ class Predictor(QThread):
         self.class_names = ['Close', 'LForward', 'LTurn', 'Neutral', 'PointIn', 'PointOut', 'RForward', 'RTurn']
         self.statusMessage = "None"
 
-        self.gaLF = Gesture('md', 'LForward', '', self.gHist)
-        self.gaLT = Gesture('ml', 'LTurn', '', self.gHist)
-        self.gaPI = Gesture('mc', 'PointIn', '2', self.gHist)
-        self.gaPO = Gesture(1, 'PointOut', '%{VK_TAB} 2', self.gHist)
-        self.gaRF = Gesture('mu', 'RForward', '%{VK_TAB} 2', self.gHist)
-        self.gaRT = Gesture('mr', 'RTurn', '', self.gHist)
-        self.gn = Gesture(1, 'Neutral', '', self.gHist)
-        self.gs = Gesture(1, 'Close', '', self.gHist)
+
+        #Gesture sett variable
+        self.gmode = 0
+
+        #Action sets help to appoint mutiple actions to one gesture
+        #(maximum of 2 inputs per slot: hold first, press 2nd, then release first)
+        self.sRF = ActionSet(['mu'], ['su'], ['up'])
+        self.sLF = ActionSet(['md'], ['sd'], ['dwn'])
+        self.sRT = ActionSet(['mr'], ['ctrleft', 'tab'], ['right'])
+        self.sLT = ActionSet(['ml'], ['ctrleft', 'pgup'], ['left'])
+        self.sPO = ActionSet(['win', 'tab'], ['ctrleft', 't'], ['space'])
+        self.sPI = ActionSet(['mc'], ['ctrleft', 'l'],  ['f'])
+
+        #Gesture type slot 1: md = mouse down, ml = mouse left, mu = mouse up, mc = mouse click, mr = mouse right
+        #slot 1: 1 = send signal whenever received, 2: send only if previous gesture is neutral,
+        # 3 = send if previuos gesture is different , 4: unimplemented
+        #Slot 2: name of gesture being sent
+        #Slot 3: Set of gestures (using actionSet object)
+        #1 element = perform that keystroke, 2 elements = hold first, press second, then release first
+        #Slot 4: Gesture history queue for implementing slot 1 methods
+
+        self.gaRF = GestureHandler(0, 'RForward', self.sRF, self.gHist, self.gmode)
+        self.gaLF = GestureHandler(0, 'LForward', self.sLF, self.gHist, self.gmode)
+        self.gaRT = GestureHandler(self.gSignalHelper(0, 1, 0), 'RTurn', self.sRT, self.gHist, self.gmode)
+        self.gaLT = GestureHandler(self.gSignalHelper(0, 1, 0), 'LTurn', self.sLT, self.gHist, self.gmode)
+        self.gaPO = GestureHandler(2, 'PointOut', self.sPO, self.gHist, self.gmode)
+        self.gaPI = GestureHandler(1, 'PointIn', self.sPI, self.gHist, self.gmode)
+
+
+
+        #self.gn = GestureHandler(, 'Neutral', [], self.gHist)
+        #self.gs = GestureHandler(, 'Close', [], self.gHist)
+
+
         print(self.all_zeros)
         self._events = {}
+
+#=======================Helper Function for gesture signal siwtching between modes
+    #Example, gSignalHelper (1,1,2) returns 1 when mode is set to 0 or 1, and 2 if mode is set to 3
+    #used for cases where gestures requires different signal send types between different modes
+    def gSignalHelper(self, m1: int , m2: int, m3: int):
+        arr = [m1, m2, m3]
+        return arr[self.gmode]
+
 
 #=======================Functions to dispatch event to main UI===============================
     def addEventListener(self, name, func):
@@ -85,6 +119,10 @@ class Predictor(QThread):
     #def onPred(self):
 
 
+#-===========================Method too checkk all history items foor long hold gestures====================
+    def all_same(self):
+        return all(x == self.gHist[0] for x in self.gHist)
+
 #===========================================Run method============================================
     def run(self):
         vals = []
@@ -101,6 +139,7 @@ class Predictor(QThread):
             self.hHigh = float(vals[3])
             self.sHigh = float(vals[4])
             self.vHigh = float(vals[5])
+
         self._run_flag = True
         self.pNeutralFlag = 0
         count = 0
@@ -116,7 +155,11 @@ class Predictor(QThread):
                 #elif self.PNeutralFlag == 1 and gHist[0] == prediction and gHist[0] == gHist[1] :
                 if prediction == 'Neutral':
                     print('Gesture set to neutral')
-                if prediction == 'Close':
+                if prediction == 'Close' and self.all_same():
+                    if self.gmode <2:
+                        self.gmode +=1
+                    else:
+                        self.gmode = 0
                     print('Performing Close Action')
                 if prediction == 'LForward':
                     self.gaLF.sendAction()
@@ -134,13 +177,15 @@ class Predictor(QThread):
                     self.gaPI.sendAction()
                     print('Performing PointIn Action')
                 if prediction == 'PointOut':
-                    #self.gaPO.sendAction()
+                    self.gaPO.sendAction()
                     print('Performing PointOut Action')
                 if prediction == 'fail':
                     print('Failed too recognize gesture')
-                print('GHIST is currently')
+
+                msgstr = 'performing' + prediction
+                self.msg.append(msgstr)
+                self.dispatchEvent('Hello')
                 self.gHist.append(prediction)
-                print(self.hLow)
 
 
 

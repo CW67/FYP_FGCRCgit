@@ -62,7 +62,7 @@ class Predictor(QThread):
         self.sRT = ActionSet(['mr'], ['ctrl', 'tab'], ['right'])
         self.sLT = ActionSet(['ml'], ['ctrl', 'pgup'], ['left'])
         self.sPO = ActionSet(['win', 'tab'], ['ctrleft', 't'], ['k'])
-        self.sPI = ActionSet(['mc'], ['ctrl', 'l'], ['f'])
+        self.sPI = ActionSet(['mc'], [''], ['f'])
 
         # Gesture type slot 1: md = mouse down, ml = mouse left, mu = mouse up, mc = mouse click, mr = mouse right
         # slot 1: 1 = send signal whenever received, 2: send only if previous gesture is neutral,
@@ -74,10 +74,10 @@ class Predictor(QThread):
 
         self.gaRF = GestureHandler([0,0,0], 'RForward', self.sRF, self.gHist, self.gmode)
         self.gaLF = GestureHandler([0,0,0], 'LForward', self.sLF, self.gHist, self.gmode)
-        self.gaRT = GestureHandler([0,1,0], 'RTurn', self.sRT, self.gHist, self.gmode)
-        self.gaLT = GestureHandler([0,1,0], 'LTurn', self.sLT, self.gHist, self.gmode)
-        self.gaPO = GestureHandler([0,1,0], 'PointOut', self.sPO, self.gHist, self.gmode)
-        self.gaPI = GestureHandler([0,1,0], 'PointIn', self.sPI, self.gHist, self.gmode)
+        self.gaRT = GestureHandler([0,2,0], 'RTurn', self.sRT, self.gHist, self.gmode)
+        self.gaLT = GestureHandler([0,2,0], 'LTurn', self.sLT, self.gHist, self.gmode)
+        self.gaPO = GestureHandler([2,2,2], 'PointOut', self.sPO, self.gHist, self.gmode)
+        self.gaPI = GestureHandler([2,2,2], 'PointIn', self.sPI, self.gHist, self.gmode)
 
         # self.gn = GestureHandler(, 'Neutral', [], self.gHist)
         # self.gs = GestureHandler(, 'Close', [], self.gHist)
@@ -144,7 +144,6 @@ class Predictor(QThread):
             # time.sleep(0.3)
             if self.all_zeros:
                 print('Predictor not running: no image detected')
-                time.sleep(0.2)
                 self.msg.append('nothing happening')
                 self.dispatchEvent('Hello')
             else:
@@ -154,25 +153,27 @@ class Predictor(QThread):
                     self._close_flag = True
                     print('Gesture set to neutral, mmode is')
                     print(self.gmode[0])
-                if prediction == 'Close' and self.all_same() and self._close_flag:
-                    self._close_flag = False
-                    if self.gmode[0] < 2:
-                        toReplace = int(self.gmode[0] + 1)
-                        self.gmode.append(toReplace)
-                        self.mode_s.append(self.gmode[0])
-                        print('Closing, moving to next')
-                        print(self.gmode[0])
-                        self.dispatchEvent('col change')
-                    else:
-                        toReplace = 0
-                        self.gmode.append(toReplace)
-                        self.mode_s.append(self.gmode[0])
-                        print(self.gmode[0])
-                        print('Closing, reset t 0')
-                        self.dispatchEvent('col change')
                     self.gHist.append(prediction)
+                if prediction == 'Close' :
+                    self.gHist.append(prediction)
+                    if self.all_same() and self._close_flag:
+                        self._close_flag = False
+                        if self.gmode[0] < 2:
+                            toReplace = int(self.gmode[0] + 1)
+                            self.gmode.append(toReplace)
+                            self.mode_s.append(self.gmode[0])
+                            print('Closing, moving to next')
+                            print(self.gmode[0])
+                            self.dispatchEvent('col change')
+                        else:
+                            toReplace = 0
+                            self.gmode.append(toReplace)
+                            self.mode_s.append(self.gmode[0])
+                            print(self.gmode[0])
+                            print('Closing, reset t 0')
+                            self.dispatchEvent('col change')
                 if prediction == 'LForward':
-                    self.gHist.append(self.gaLF.sendAction())
+                    self.gaLF.sendAction()
                     print('Performing LForward Action')
                 if prediction == 'LTurn':
                     self.gaLT.sendAction()
@@ -182,6 +183,7 @@ class Predictor(QThread):
                     print('Performing RFoward Action')
                 if prediction == 'RTurn':
                     self.gaRT.sendAction()
+                    print('Performing RTurn Action')
                 if prediction == 'PointIn':
                     self.gaPI.sendAction()
                     print('Performing PointIn Action')
@@ -194,6 +196,7 @@ class Predictor(QThread):
                 msgstr = 'performing' + prediction
                 self.msg.append(msgstr)
                 self.dispatchEvent('Hello')
+                time.sleep(0.2)
 
     def stop(self):
         """Sets run flag to False and waits for thread to finish"""

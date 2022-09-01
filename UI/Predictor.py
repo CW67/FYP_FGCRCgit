@@ -196,7 +196,6 @@ class Predictor(QThread):
                 msgstr = 'performing' + prediction
                 self.msg.append(msgstr)
                 self.dispatchEvent('Hello')
-                time.sleep(0.2)
 
     def stop(self):
         """Sets run flag to False and waits for thread to finish"""

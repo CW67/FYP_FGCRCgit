@@ -63,6 +63,7 @@ class GestureHandler():
                 pyautogui.scroll(-25)
             else:
                 pyautogui.press(sendSet[0])
+        self.History.append(self.gesture)
 
 
     def holdKeyWatcher(self):
@@ -91,6 +92,7 @@ class GestureHandler():
             print(self.History[-1] != self.gesture)
             print(self.mode == 2)
             self.keysend_helper()
+            time.sleep(1)
      #================pyautogui mouse movement=============
         else:
             print('Invalid mode')

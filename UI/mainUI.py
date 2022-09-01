@@ -28,19 +28,24 @@ class MyWindow(QMainWindow):
         self.frameGeometry().moveCenter(cent)
         self.setWindowTitle('F.Move')
         self.initWindow()
+        self.setMaximumSize(1400, 800)
         self.setWindowFlags(
-            Qt.Window | Qt.CustomizeWindowHint | Qt.WindowStaysOnTopHint | Qt.WindowCloseButtonHint | Qt.WindowMinMaxButtonsHint)
+            Qt.Window | Qt.CustomizeWindowHint | Qt.WindowCloseButtonHint | Qt.WindowMinMaxButtonsHint | Qt.WindowStaysOnTopHint)
+
         self.show()
         self.gesture_message = deque([], maxlen=1)
-        self.predictor = Predictor(self.gesture_message)
+        self.mode_status = deque([], maxlen=1)
+        self.predictor = Predictor(self.gesture_message, self.mode_status)
         self.predFlag = False
         self.predictor.addEventListener("Hello", self.foo)
+        self.predictor.addEventListener("col change", self.colChange)
         self.sImg_shape = (480, 640, 3)
         self.sImg = np.empty(self.sImg_shape)
+        #self.setGeometry(0, 0, 1000, 1000)
 
-########################################################################################################################
+#########l###############################################################################################################
 #                                                   GUI Elements                                                            #
-########################################################################################################################
+###########################################################         #############################################################
     def initWindow(self):
         # create the video capture thread
 
@@ -105,12 +110,26 @@ class MyWindow(QMainWindow):
         self.image_label.setStyleSheet("background : black;")
         self.image_label.move(10, 40)
 
+        #Guide Image
+        # setting  the geometry of window
+
+        # creating label
+        self.glabel = QLabel(self)
+        # loading image
+        self.pixmap = QPixmap('GNTNew.png')
+        # adding image to label
+        self.glabel.setPixmap(self.pixmap)
+        # Optional, resize label to image size
+        self.glabel.resize(self.pixmap.width(),self.pixmap.height())
+        self.glabel.move(500, 40)
+
 ########################################################################################################################
 #                                                   Start/stop Buttons                                                            #
 ########################################################################################################################
     # Activates when Start/Stop video button is clicked to Start (ss_video
 
     def ClickStartVideo(self):
+        QTimer.singleShot(1, self.bottomRight)
         # Change label color to light blue
         self.ss_video.clicked.disconnect(self.ClickStartVideo)
         self.status.showMessage('Video Running...')
@@ -128,6 +147,7 @@ class MyWindow(QMainWindow):
 
     # Activates when Start/Stop video button is clicked to Stop (ss_video)
     def ClickStopVideo(self):
+        self.center()
         self.camThread.change_pixmap_signal.disconnect()
         self.ss_video.setText('Start video')
         self.status.showMessage('Ready to start')
@@ -136,6 +156,8 @@ class MyWindow(QMainWindow):
         self.predictor.stop()
         self.ss_video.clicked.connect(self.ClickStartVideo)
         self.vidConnectFlag = 0
+
+
 
 
     ########################################################################################################################
@@ -199,6 +221,40 @@ class MyWindow(QMainWindow):
 
     def foo(self):
         self.status.showMessage(self.gesture_message[-1])
+
+    def colChange(self):
+        print('current mode in mainui is ')
+        print(self.mode_status[0])
+        if self.mode_status[0] == 0:
+            self.status.setStyleSheet("background : lightblue;")
+        elif self.mode_status[0] == 1:
+            self.status.setStyleSheet("background : palegoldenrod;")
+        else:
+            self.status.setStyleSheet("background : palegreen;")
+
+    def topLeft(self):
+        # no need to move the point of the geometry rect if you're going to use
+        # the reference top left only
+        topLeftPoint = QApplication.desktop().availableGeometry().topLeft()
+        self.move(topLeftPoint)
+
+    def bottomRight(self):
+        self.setGeometry(0, 0, 500, 350)
+        # no need to move the point of the geometry rect if you're going to use
+        # the reference top left only
+        ag = QDesktopWidget().availableGeometry()
+        sg = QDesktopWidget().screenGeometry()
+        widget = self.geometry()
+        x = ag.width() - widget.width()
+        y = 2 * ag.height() - sg.height() - widget.height()
+        self.move(x, y)
+
+    def center(self):
+        self.resize(1400, 800)
+        cent = QDesktopWidget().availableGeometry().center()  # Finds the center of the screen
+        self.move(cent)
+        self.frameGeometry().moveCenter(cent)
+
 
     ###################################################CAMERA SELECTION======================================================
 

@@ -14,13 +14,12 @@ class ActionSet():
 
     def getSet(self, index):
         if index <=2:
-            print(self.bindList[index])
             return self.bindList[index]
         return []
 
 #Class which handles performing key / mouse send inputs
 class GestureHandler():
-    def __init__(self, mode, gesture, binding: ActionSet, history: deque , gesture_mode):
+    def __init__(self, mode, gesture, binding: ActionSet, history: deque , gesture_mode: deque):
         # mode, gesture, binding, history
         self.mode = mode
         self.binding = binding
@@ -36,14 +35,11 @@ class GestureHandler():
         return self.History
 
     def keysend_helper(self):
-        sendSet = self.binding.getSet(self.gmode)
+        print('FROM GESTURE HANDLER')
+        print(self.gmode[0])
+        sendSet = self.binding.getSet(self.gmode[0])
         if len(sendSet) == 2:
-            pyautogui.keyDown(sendSet[0])
-            time.sleep(.1)
-            pyautogui.press(sendSet[1])
-            time.sleep(.1)
-            pyautogui.keyUp(sendSet[0])
-
+            pyautogui.hotkey(sendSet[0], sendSet[1])
         elif len(sendSet) == 1:
             if sendSet[0] == 'ml':
                 pyautogui.move(-15, 0)
@@ -61,10 +57,10 @@ class GestureHandler():
                 pyautogui.click()
 
             elif sendSet[0] == 'su':
-                pyautogui.scroll(10)
+                pyautogui.scroll(25)
 
             elif sendSet[0] == 'sd':
-                pyautogui.scroll(-5)
+                pyautogui.scroll(-25)
             else:
                 pyautogui.press(sendSet[0])
 
@@ -79,17 +75,23 @@ class GestureHandler():
             time.sleep(0.05)
 
     def sendAction(self):
-        if self.mode == 0 :
+        print('MODE')
+        amode = int(self.mode[self.gmode[0]])
+        print(amode)
+        print(self.History[-1])
+        print(amode == 1)
+        if amode == 0:
             self.keysend_helper()  #Perform regardless (will continuosly send)
-
-        elif self.mode == 1:
-            if self.History[-1] == 'Neutral': #Perform once (send only after neutral)
-                self.keysend_helper()
-
-        elif self.mode == 2:
-            if self.History[-1] != self.gesture: #Perform once (send after any other gesture)
-                self.keysend_helper()
-
+        elif amode == 1 and self.History[-1] == 'Neutral':
+            print('PERFORMING MODE 1')
+            self.keysend_helper()
+        elif amode == 2 and self.History[-1] != self.gesture:
+            print('PERFORMING MODE 2')
+            print(self.History)
+            print(self.History[-1] != self.gesture)
+            print(self.mode == 2)
+            self.keysend_helper()
      #================pyautogui mouse movement=============
         else:
             print('Invalid mode')
+        return self.gesture

@@ -5,7 +5,7 @@ from qtrangeslider.qtcompat import QtCore
 from qtrangeslider.qtcompat import QtWidgets as QtW
 from qtrangeslider import QLabeledRangeSlider
 from PyQt5 import QtGui
-from PyQt5.QtWidgets import QLabel, QPushButton, QComboBox
+from PyQt5.QtWidgets import QLabel, QPushButton, QComboBox, QMessageBox
 from PyQt5.QtGui import QPixmap
 import cv2
 from PyQt5.QtCore import pyqtSignal, pyqtSlot, Qt, QThread
@@ -273,6 +273,11 @@ class calibrationWidget(QtW.QDialog):
             for listitem in arr:
                 filehandle.write('%s\n' % listitem)
 
+        qm = QMessageBox
+        ret = qm.question(self, '', "Configuration saved, return to main menu?", qm.Yes | qm.No)
+        if ret == qm.Yes:
+            self.backMenu()
+
 
     def loadSeg(self):
         vals = []
@@ -299,6 +304,7 @@ class calibrationWidget(QtW.QDialog):
         if self.vidConnectFlag == 1:
             self.vThread.stop()
             self.ClickStopVideo()
+        self.close()
 
 # =======================Slider Actions=============================
 

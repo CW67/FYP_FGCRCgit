@@ -57,18 +57,18 @@ class MyWindow(QMainWindow):
         self.ss_video.clicked.connect(self.ClickStartVideo)
         #self.ss_video.clicked.connect(self.MakePrediction)
 
-        self.ss_test = QPushButton(self)
-        self.ss_test.setText('Make Single Prediction')
-        self.ss_test.move(350, 100)
-        self.ss_test.resize(150, 50)
-        self.ss_test.clicked.connect(self.MakePrediction)
+        #self.ss_test = QPushButton(self)
+        #self.ss_test.setText('Make Single Prediction')
+        #self.ss_test.move(350, 100)
+        #self.ss_test.resize(150, 50)
+        #self.ss_test.clicked.connect(self.MakePrediction)
         #self.ss_video.clicked.connect(self.MakePrediction)
 
-        self.ss_pred = QPushButton(self)
-        self.ss_pred.setText('Connect controlling')
-        self.ss_pred.move(350, 150)
-        self.ss_pred.resize(150, 50)
-        self.ss_pred.clicked.connect(self.connect_predictor)
+        #self.ss_pred = QPushButton(self)
+       # self.ss_pred.setText('Connect controlling')
+        #self.ss_pred.move(350, 150)
+       # self.ss_pred.resize(150, 50)
+        #self.ss_pred.clicked.connect(self.connect_predictor)
 
         # creating a tool bar
         toolbar = QToolBar("Camera Tool Bar")
@@ -89,7 +89,7 @@ class MyWindow(QMainWindow):
         button_camset = QAction("IP Camera", self)
         button_camset.setStatusTip("Manually Input IP Camera")
         button_camset.triggered.connect(self.showdialog)
-        toolbar.addAction(button_camset)
+        #toolbar.addAction(button_camset)
 
         button_skin = QAction("Skin Calibration ", self)
         button_skin.setStatusTip("Calibrate how the system sees you")
@@ -130,7 +130,6 @@ class MyWindow(QMainWindow):
 
     def ClickStartVideo(self):
         QTimer.singleShot(1, self.bottomRight)
-        # Change label color to light blue
         self.ss_video.clicked.disconnect(self.ClickStartVideo)
         self.status.showMessage('Video Running...')
         # Change button to stop

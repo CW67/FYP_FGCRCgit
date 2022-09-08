@@ -19,6 +19,7 @@ class Predictor(QThread):
         super().__init__()
 
         # Message used to send name of  gesture detected back to main UI
+        self._close_flag = False
         self.msg = msg
         self.mode_s = mode_s
         # Load the saved settings from segmentation calibration
@@ -227,19 +228,12 @@ class Predictor(QThread):
         skinMask = cv2.resize(skinMask, dim)
 
         bin_img = cv2.cvtColor(skinMask, cv2.COLOR_GRAY2RGB)
-        # print(bin_img.shape)
         img_array = keras.utils.img_to_array(bin_img)
         img_array = expand_dims(img_array, 0)
         predictions = self.fmodel.predict(img_array)
         score = tf.nn.softmax(predictions[0])
-        # print(
-        # "This image most likely belongs to {} with a {:.2f} percent confidence."
-        #   .format(class_names[np.argmax(score)], 100 * np.max(score))
-        # )
         score = float("%0.2f" % (max(score) * 100))
         result = self.class_names[np.argmax(predictions)]
-        # print(result)
-        # print(score)
 
         if score > 70:
             return result

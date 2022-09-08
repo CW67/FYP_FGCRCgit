@@ -21,13 +21,13 @@ class ActionSet():
 class GestureHandler():
     def __init__(self, mode, gesture, binding: ActionSet, history: deque , gesture_mode: deque):
         # mode, gesture, binding, history
-        self.mode = mode
-        self.binding = binding
-        self.History = history
-        self.gesture = gesture
+        self.gesture_modes = mode #Array consisting of 3 gesture modes for the 3 different set of actions assigned
+        self.binding = binding #The set of actions for the gesture
+        self.History = history #History deque synced with Predictor
+        self.gesture = gesture #The gesture assigned to this gesture object
         self.holdKey = False
         self.holdMouse = False
-        self.gmode = gesture_mode
+        self.active_mode = gesture_mode #Current active gesture mode
 
         #Modes: 0- Default/function after neutral, 1: Continuos, 2: Function after any other gesture
 
@@ -36,8 +36,8 @@ class GestureHandler():
 
     def keysend_helper(self):
         print('FROM GESTURE HANDLER')
-        print(self.gmode[0])
-        sendSet = self.binding.getSet(self.gmode[0])
+        print(self.active_mode[0])
+        sendSet = self.binding.getSet(self.active_mode[0])
         if len(sendSet) == 2:
             pyautogui.hotkey(sendSet[0], sendSet[1])
         elif len(sendSet) == 1:
@@ -77,7 +77,7 @@ class GestureHandler():
 
     def sendAction(self):
         print('MODE')
-        amode = int(self.mode[self.gmode[0]])
+        amode = int(self.gesture_modes[self.active_mode[0]]) #Set the action/keybind to use from gesture_modes based on current active mode
         print(amode)
         print(self.History[-1])
         print(amode == 1)
@@ -90,7 +90,7 @@ class GestureHandler():
             print('PERFORMING MODE 2')
             print(self.History)
             print(self.History[-1] != self.gesture)
-            print(self.mode == 2)
+            print(self.gesture_modes == 2)
             self.keysend_helper()
             time.sleep(1)
      #================pyautogui mouse movement=============

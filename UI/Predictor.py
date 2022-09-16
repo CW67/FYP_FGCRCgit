@@ -5,7 +5,7 @@ from numpy import expand_dims
 from keras.utils import img_to_array
 from keras.models import load_model
 from plyer import notification
-from GestureHandler import GestureHandler, ActionSet
+from GActionHandler import GActionHandler, ActionSet
 import numpy as np
 import cv2
 import time
@@ -52,12 +52,12 @@ class Predictor(QThread):
         self.class_names = ['Close', 'LForward', 'LTurn', 'Neutral', 'PointIn', 'PointOut', 'RForward', 'RTurn']
         self.statusMessage = "None"
 
-        # Gesture sett variable
+        # Gesture mode variable (1,2,3)
         self.gmode = deque([], maxlen=1)
         self.gmode.append(0)
 
         # Action sets help to appoint mutiple actions to one gesture
-        # (maximum of 2 inputs per slot: hold first, press 2nd, then release first)
+        # (maximum of 2 inputs per slot: hold first, press 2nd, then release first in the case that 2 actions are used)
         self.sRF = ActionSet(['mu'], ['su'], ['up'])
         self.sLF = ActionSet(['md'], ['sd'], ['down'])
         self.sRT = ActionSet(['mr'], ['ctrl', 'tab'], ['right'])
@@ -73,12 +73,12 @@ class Predictor(QThread):
         # 1 element = perform that keystroke, 2 elements = hold first, press second, then release first
         # Slot 4: Gesture history queue for implementing slot 1 methodstt
 
-        self.gaRF = GestureHandler([0,0,0], 'RForward', self.sRF, self.gHist, self.gmode)
-        self.gaLF = GestureHandler([0,0,0], 'LForward', self.sLF, self.gHist, self.gmode)
-        self.gaRT = GestureHandler([0,2,0], 'RTurn', self.sRT, self.gHist, self.gmode)
-        self.gaLT = GestureHandler([0,2,0], 'LTurn', self.sLT, self.gHist, self.gmode)
-        self.gaPO = GestureHandler([2,2,2], 'PointOut', self.sPO, self.gHist, self.gmode)
-        self.gaPI = GestureHandler([2,2,2], 'PointIn', self.sPI, self.gHist, self.gmode)
+        self.gaRF = GActionHandler([0, 0, 0], 'RForward', self.sRF, self.gHist, self.gmode)
+        self.gaLF = GActionHandler([0, 0, 0], 'LForward', self.sLF, self.gHist, self.gmode)
+        self.gaRT = GActionHandler([0, 2, 0], 'RTurn', self.sRT, self.gHist, self.gmode)
+        self.gaLT = GActionHandler([0, 2, 0], 'LTurn', self.sLT, self.gHist, self.gmode)
+        self.gaPO = GActionHandler([2, 2, 2], 'PointOut', self.sPO, self.gHist, self.gmode)
+        self.gaPI = GActionHandler([2, 2, 2], 'PointIn', self.sPI, self.gHist, self.gmode)
 
         # self.gn = GestureHandler(, 'Neutral', [], self.gHist)
         # self.gs = GestureHandler(, 'Close', [], self.gHist)
@@ -145,7 +145,7 @@ class Predictor(QThread):
             # time.sleep(0.3)
             if self.all_zeros:
                 print('Predictor not running: no image detected')
-                self.msg.append('nothing happening')
+                self.msg.append('Predictor running, but no frames are being detected.')
                 self.dispatchEvent('Hello')
             else:
                 prediction = self.predict_rgb(self.sImg)
@@ -191,10 +191,10 @@ class Predictor(QThread):
                 if prediction == 'PointOut':
                     self.gaPO.sendAction()
                     print('Performing PointOut Action')
-                if prediction == 'fail':
+                if prediction == 'Unrecgnized':
                     print('Failed too recognize gesture')
 
-                msgstr = 'performing' + prediction
+                msgstr = 'Current gesture: ' + prediction
                 self.msg.append(msgstr)
                 self.dispatchEvent('Hello')
 

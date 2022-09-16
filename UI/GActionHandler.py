@@ -1,13 +1,13 @@
 from collections import deque
 from pywinauto.keyboard import send_keys
 import pyautogui
-import time
 from typing import List
-
 import time
+#Author: Cheong Fulian, William
+#Description: Contains classes that handles all methods related to gesture keybinds or mouse emulation
 
-
-#Defines the set of actions a GestureHandler will perform, 3 sets, of 2 each
+# Container for the the set of actions a GActionHandler will perform
+# Contains 3 sets of 'gesture action' arrays, supports either single or combination of 2 keys
 class ActionSet():
     def __init__(self, binding1: List[str], binding2: List[str], binding3: List[str]):
         self.bindList = [binding1, binding2, binding3]
@@ -17,8 +17,8 @@ class ActionSet():
             return self.bindList[index]
         return []
 
-#Class which handles performing key / mouse send inputs
-class GestureHandler():
+#Class which handles performing the key press and their behaviour
+class GActionHandler():
     def __init__(self, mode, gesture, binding: ActionSet, history: deque , gesture_mode: deque):
         # mode, gesture, binding, history
         self.gesture_modes = mode #Array consisting of 3 gesture modes for the 3 different set of actions assigned
@@ -31,9 +31,11 @@ class GestureHandler():
 
         #Modes: 0- Default/function after neutral, 1: Continuos, 2: Function after any other gesture
 
+    #Retrieve gesture history(deque from predictor)
     def getHistory(self):
         return self.History
 
+    #Class that actually sends the key send or mouse movemennt
     def keysend_helper(self):
         print('FROM GESTURE HANDLER')
         print(self.active_mode[0])
@@ -65,16 +67,7 @@ class GestureHandler():
                 pyautogui.press(sendSet[0])
         self.History.append(self.gesture)
 
-
-    def holdKeyWatcher(self):
-        while True:
-            if self.History[-1] != self.gesture:
-                self.holdKey = False
-                up_bind = self.binding + " up}"
-                send_keys(up_bind)
-                break
-            time.sleep(0.05)
-
+    #Controls the behaviour of the key press. Being hold continuos or single tap
     def sendAction(self):
         print('MODE')
         amode = int(self.gesture_modes[self.active_mode[0]]) #Set the action/keybind to use from gesture_modes based on current active mode

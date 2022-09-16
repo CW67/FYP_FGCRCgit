@@ -13,7 +13,11 @@ from collections import deque
 
 
 
-### Video player made for the GUI, credit to Evgeny Fomin and Antonio Domènech (As seen on github https://gist.github.com/docPhil99/ca4da12c9d6f29b9cea137b617c7b8b1)
+
+
+
+
+
 
 
 class MyWindow(QMainWindow):
@@ -26,7 +30,7 @@ class MyWindow(QMainWindow):
         self.setStyleSheet("background-color: white;")
         self.resize(1400, 800)
         self.frameGeometry().moveCenter(cent)
-        self.setWindowTitle('F.Move')
+        self.setWindowTitle('FGRGC')
         self.initWindow()
         self.setMaximumSize(1400, 800)
         self.setWindowFlags(

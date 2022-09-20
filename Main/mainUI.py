@@ -1,4 +1,3 @@
-
 from PyQt5.QtWidgets import *
 import sys
 from InputDialog import InputDialog
@@ -12,13 +11,8 @@ import time
 from collections import deque
 
 
-
-
-
-
-
-
-
+# Author: Cheong Fulian, William
+# Description: Main graphical user interface for the aplication, serves as home page
 
 class MyWindow(QMainWindow):
     def __init__(self):
@@ -45,11 +39,11 @@ class MyWindow(QMainWindow):
         self.predictor.addEventListener("col change", self.colChange)
         self.sImg_shape = (480, 640, 3)
         self.sImg = np.empty(self.sImg_shape)
-        #self.setGeometry(0, 0, 1000, 1000)
+        # self.setGeometry(0, 0, 1000, 1000)
 
-#########l###############################################################################################################
-#                                                   GUI Elements                                                            #
-###########################################################         #############################################################
+    #########l###############################################################################################################
+    #                                                   GUI Elements                                                            #
+    ###########################################################         #############################################################
     def initWindow(self):
         # create the video capture thread
 
@@ -59,20 +53,20 @@ class MyWindow(QMainWindow):
         self.ss_video.move(350, 50)
         self.ss_video.resize(150, 50)
         self.ss_video.clicked.connect(self.ClickStartVideo)
-        #self.ss_video.clicked.connect(self.MakePrediction)
+        # self.ss_video.clicked.connect(self.MakePrediction)
 
-        #self.ss_test = QPushButton(self)
-        #self.ss_test.setText('Make Single Prediction')
-        #self.ss_test.move(350, 100)
-        #self.ss_test.resize(150, 50)
-        #self.ss_test.clicked.connect(self.MakePrediction)
-        #self.ss_video.clicked.connect(self.MakePrediction)
+        # self.ss_test = QPushButton(self)
+        # self.ss_test.setText('Make Single Prediction')
+        # self.ss_test.move(350, 100)
+        # self.ss_test.resize(150, 50)
+        # self.ss_test.clicked.connect(self.MakePrediction)
+        # self.ss_video.clicked.connect(self.MakePrediction)
 
-        #self.ss_pred = QPushButton(self)
-       # self.ss_pred.setText('Connect controlling')
-        #self.ss_pred.move(350, 150)
-       # self.ss_pred.resize(150, 50)
-        #self.ss_pred.clicked.connect(self.connect_predictor)
+        # self.ss_pred = QPushButton(self)
+        # self.ss_pred.setText('Connect controlling')
+        # self.ss_pred.move(350, 150)
+        # self.ss_pred.resize(150, 50)
+        # self.ss_pred.clicked.connect(self.connect_predictor)
 
         # creating a tool bar
         toolbar = QToolBar("Camera Tool Bar")
@@ -93,7 +87,7 @@ class MyWindow(QMainWindow):
         button_camset = QAction("IP Camera", self)
         button_camset.setStatusTip("Manually Input IP Camera")
         button_camset.triggered.connect(self.showdialog)
-        #toolbar.addAction(button_camset)
+        # toolbar.addAction(button_camset)
 
         button_skin = QAction("Skin Calibration ", self)
         button_skin.setStatusTip("Calibrate how the system sees you")
@@ -114,22 +108,22 @@ class MyWindow(QMainWindow):
         self.image_label.setStyleSheet("background : black;")
         self.image_label.move(10, 40)
 
-        #Guide Image
+        # Guide Image
         # setting  the geometry of window
 
         # creating label
         self.glabel = QLabel(self)
         # loading image
-        self.pixmap = QPixmap('GNTNew.png')
+        self.pixmap = QPixmap('GesturesNT6.png')
         # adding image to label
         self.glabel.setPixmap(self.pixmap)
         # Optional, resize label to image size
-        self.glabel.resize(self.pixmap.width(),self.pixmap.height())
+        self.glabel.resize(self.pixmap.width(), self.pixmap.height())
         self.glabel.move(500, 40)
 
-########################################################################################################################
-#                                                   Start/stop Buttons                                                            #
-########################################################################################################################
+    ########################################################################################################################
+    #                                                   Start/stop Buttons                                                            #
+    ########################################################################################################################
     # Activates when Start/Stop video button is clicked to Start (ss_video
 
     def ClickStartVideo(self):
@@ -142,11 +136,11 @@ class MyWindow(QMainWindow):
         # start the thread
         self.camThread.start()
         self.predictor.start()
-        #self.predictor.start()
+        # self.predictor.start()
         self.ss_video.clicked.connect(self.camThread.stop)  # Stop the video if button clicked
         self.ss_video.clicked.connect(self.ClickStopVideo)
         self.vidConnectFlag = 1
-        #self.predFlag = True
+        # self.predFlag = True
 
     # Activates when Start/Stop video button is clicked to Stop (ss_video)
     def ClickStopVideo(self):
@@ -160,19 +154,15 @@ class MyWindow(QMainWindow):
         self.ss_video.clicked.connect(self.ClickStartVideo)
         self.vidConnectFlag = 0
 
-
-
-
     ########################################################################################################################
     #                                                   Video  Actions                                                            #
     ########################################################################################################################
 
-
     def update_image(self, cv_img):
         """Updates the image_label with a new opencv image"""
-        #print(type(cv_img))
+        # print(type(cv_img))
         self.sImg = cv_img
-       # print('Predictor Image')
+        # print('Predictor Image')
         self.predictor.updateImg(self.sImg)
         qt_img = self.convert_cv_qt(self.sImg)
         self.image_label.setPixmap(qt_img)
@@ -213,7 +203,6 @@ class MyWindow(QMainWindow):
             self.camThread.stop()
             self.ClickStopVideo()
         calibration.exec_()
-
 
     def showNoti(selfs):
         # import win10toast
@@ -258,7 +247,6 @@ class MyWindow(QMainWindow):
         self.move(cent)
         self.frameGeometry().moveCenter(cent)
 
-
     ###################################################CAMERA SELECTION======================================================
 
     def returnHighlighted(self, param):
@@ -269,20 +257,6 @@ class MyWindow(QMainWindow):
             self.ClickStopVideo()
 
     ##########################################################################################################################
-
-    # ===========================================PREDICTOR=========================================================
-
-
-        #score = tf.nn.softmax(predictions[0])
-        #class_names = ['Close', 'LForward', 'LTurn', 'Neutral', 'PointIn', 'PointOut', 'RForward', 'RTurn']
-        #print(
-           # "This image most likely belongs to {} with a {:.2f} percent confidence."
-        #    .format(class_names[np.argmax(score)], 100 * np.max(score))
-       # )
-
-
-##############################################################################################################
-
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)

@@ -1,10 +1,6 @@
-from threading import Thread
 import tensorflow as tf
 from tensorflow import keras
 from numpy import expand_dims
-from keras.utils import img_to_array
-from keras.models import load_model
-from plyer import notification
 from GActionHandler import GActionHandler, ActionSet
 import numpy as np
 import cv2
@@ -13,12 +9,15 @@ from PyQt5.QtCore import (QCoreApplication, QObject, QRunnable, QThread,
                           QThreadPool, pyqtSignal, QTimer)
 from collections import deque
 
+#Author: Cheong Fulian, William
+#Description: Class containing model implementation and image processing
+
 
 class Predictor(QThread):
     def __init__(self, msg: deque, mode_s: deque):
         super().__init__()
 
-        # Message used to send name of  gesture detected back to main UI
+        # Message used to send name of  gesture detected back to main Main
         self._close_flag = False
         self.msg = msg
         self.mode_s = mode_s
@@ -62,8 +61,8 @@ class Predictor(QThread):
         self.sLF = ActionSet(['md'], ['sd'], ['down'])
         self.sRT = ActionSet(['mr'], ['ctrl', 'tab'], ['right'])
         self.sLT = ActionSet(['ml'], ['ctrl', 'pgup'], ['left'])
-        self.sPO = ActionSet(['win', 'tab'], ['ctrleft', 't'], ['k'])
-        self.sPI = ActionSet(['mc'], [''], ['f'])
+        self.sPO = ActionSet(['win', 'tab'], ['ctrl', 't'], ['f'])
+        self.sPI = ActionSet(['mc'], ['f5'], ['k'])
 
         # Gesture type slot 1: md = mouse down, ml = mouse left, mu = mouse up, mc = mouse click, mr = mouse right
         # slot 1: 1 = send signal whenever received, 2: send only if previous gesture is neutral,
@@ -94,7 +93,7 @@ class Predictor(QThread):
 
         return arr[self.gmode[0]]
 
-    # =======================Functions to dispatch event to main UI===============================
+    # =======================Functions to dispatch event to main Main===============================
     def addEventListener(self, name, func):
         if name not in self._events:
             self._events[name] = [func]
@@ -106,7 +105,7 @@ class Predictor(QThread):
         for func in functions:
             QTimer.singleShot(0, func)
 
-    # ===========================Functino to update the image loaded in the predictor from the main UI================
+    # ===========================Functino to update the image loaded in the predictor from the main Main================
     def updateImg(self, image):
         self.sImg = image
         # print(self.sImg.shape)

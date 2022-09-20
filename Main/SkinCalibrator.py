@@ -42,6 +42,9 @@ QRangeSlider {
 """
 
 
+# Author: Cheong Fulian, William
+# Description: Skin segmentaiton tool
+
 class calibrationWidget(QtW.QDialog):
     def __init__(self) -> None:
         super(calibrationWidget, self).__init__()
@@ -64,12 +67,9 @@ class calibrationWidget(QtW.QDialog):
 
         self.vThread = VideoThread()
 
-
-
         self.range_hslider = QLabeledRangeSlider(QtCore.Qt.Horizontal)
         self.range_hslider.setMaximumWidth(400)
         self.range_hslider.setRange(0, 255)
-
 
         self.range_sslider = QLabeledRangeSlider(QtCore.Qt.Horizontal)
         self.range_sslider.setMaximumWidth(400)
@@ -80,7 +80,6 @@ class calibrationWidget(QtW.QDialog):
         self.range_vslider.setRange(0, 255)
 
         self.loadSeg()
-
 
         label1 = QtW.QLabel("Hue Value")
         # label1.setSizePolicy(szp, szp)
@@ -107,16 +106,15 @@ class calibrationWidget(QtW.QDialog):
         self.video_label2.setFixedHeight(self.display_height)
         self.video_label2.setStyleSheet("background : black;")
 
-
         # Button to start video
         self.ss_video = QPushButton()
         self.ss_video.setText('Start video')
         self.ss_video.move(350, 50)
         self.ss_video.resize(150, 50)
         self.ss_video.clicked.connect(self.ClickStartVideo)
-        #left.layout().addWidget(self.ss_video)
+        # left.layout().addWidget(self.ss_video)
 
-        #Camera Selector
+        # Camera Selector
         camera_selector = QComboBox()
         camera_selector.setStatusTip("Choose camera to take pictures")
         # adding tool tip to it
@@ -129,14 +127,13 @@ class calibrationWidget(QtW.QDialog):
         camera_selector.activated[int].connect(self.returnSelected)
         camera_selector.setFixedWidth(200)
 
-
-        #Save button
+        # Save button
         self.ss_save = QPushButton()
         self.ss_save.setText('Save configuration')
         self.ss_save.clicked.connect(self.saveSeg)
         self.ss_save.setFixedHeight(150)
 
-        #Save button
+        # Save button
         self.ss_back = QPushButton()
         self.ss_back.setText('Back')
         self.ss_back.clicked.connect(self.backMenu)
@@ -173,7 +170,7 @@ class calibrationWidget(QtW.QDialog):
         mid = QtW.QWidget()
         mid.setLayout(QtW.QHBoxLayout())
 
-        bottom =QtW.QWidget()
+        bottom = QtW.QWidget()
         bottom.setLayout(QtW.QHBoxLayout())
         bottom.layout().addWidget(left)
         bottom.layout().addWidget(right)
@@ -278,7 +275,6 @@ class calibrationWidget(QtW.QDialog):
         if ret == qm.Yes:
             self.backMenu()
 
-
     def loadSeg(self):
         vals = []
         # open file and read the content in a list
@@ -306,7 +302,7 @@ class calibrationWidget(QtW.QDialog):
             self.ClickStopVideo()
         self.close()
 
-# =======================Slider Actions=============================
+    # =======================Slider Actions=============================
 
     def changeH(self, e):
         self.hLow = e[0]

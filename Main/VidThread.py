@@ -3,9 +3,9 @@ import cv2
 import numpy as np
 
 
+#Author: Cheong Fulian, William
+#Description: Video player made for the GUI, credit to Evgeny Fomin and Antonio Domènech for his OpenCV to pyQT video method
 
-### Video player made for the GUI, credit to Evgeny Fomin and Antonio Domènech for his OpenCV to pyQT video method
-# (As seen on github https://gist.github.com/docPhil99/ca4da12c9d6f29b9cea137b617c7b8b1)
 
 class VideoThread(QThread):
     change_pixmap_signal = pyqtSignal(np.ndarray)

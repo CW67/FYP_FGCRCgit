@@ -1,11 +1,7 @@
 from collections import deque
 
-from pywinauto.application import Application
-from pywinauto.keyboard import send_keys
-import time
 from GActionHandler import GActionHandler, ActionSet
-import sys
-import pyautogui
+
 
 class Experiments():
     def gSignalHelper(self, m1: int, m2: int, m3: int):

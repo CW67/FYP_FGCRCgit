@@ -1,17 +1,15 @@
-from VidThread import VideoThread
-from superqt import QRangeSlider
-from qtrangeslider import QRangeSlider
+import cv2
+import numpy as np
+from PyQt5 import QtGui
+from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QPixmap
+from PyQt5.QtMultimedia import QCameraInfo
+from PyQt5.QtWidgets import QLabel, QPushButton, QComboBox, QMessageBox
+from qtrangeslider import QLabeledRangeSlider
 from qtrangeslider.qtcompat import QtCore
 from qtrangeslider.qtcompat import QtWidgets as QtW
-from qtrangeslider import QLabeledRangeSlider
-from PyQt5 import QtGui
-from PyQt5.QtWidgets import QLabel, QPushButton, QComboBox, QMessageBox
-from PyQt5.QtGui import QPixmap
-import cv2
-from PyQt5.QtCore import pyqtSignal, pyqtSlot, Qt, QThread
-import numpy as np
-from numpy import expand_dims
-from PyQt5.QtMultimedia import QCameraInfo
+
+from VidThread import VideoThread
 
 QSS = """
 QSlider {

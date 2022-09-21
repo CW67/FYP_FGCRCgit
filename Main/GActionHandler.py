@@ -1,5 +1,4 @@
 from collections import deque
-from pywinauto.keyboard import send_keys
 import pyautogui
 from typing import List
 import time

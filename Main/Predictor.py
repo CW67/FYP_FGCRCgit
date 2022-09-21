@@ -1,13 +1,15 @@
-import tensorflow as tf
-from tensorflow import keras
-from numpy import expand_dims
-from GActionHandler import GActionHandler, ActionSet
-import numpy as np
-import cv2
-import time
-from PyQt5.QtCore import (QCoreApplication, QObject, QRunnable, QThread,
-                          QThreadPool, pyqtSignal, QTimer)
 from collections import deque
+
+import cv2
+import numpy as np
+import tensorflow as tf
+from PyQt5.QtCore import (QThread,
+                          QTimer)
+from numpy import expand_dims
+from tensorflow import keras
+
+from GActionHandler import GActionHandler, ActionSet
+
 
 #Author: Cheong Fulian, William
 #Description: Class containing model implementation and image processing

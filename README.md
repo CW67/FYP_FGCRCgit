@@ -3,7 +3,7 @@ Alternative access branch for the FGCRC project (No project history)
 
 To run the system, run /main/mainUI
 
-Source code for model building can be found in 'cnn model build' folder
+ImageTest contains model building notebook
 
 4 classifiers included in here
 
